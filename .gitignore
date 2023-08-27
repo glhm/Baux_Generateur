@@ -1,0 +1,17 @@
+# Ignorer tous les fichiers .log
+*.log
+
+# Ignorer le dossier des dépendances pour Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignorer le dossier des dépendances pour Node.js
+node_modules/
+
+# Ignorer un fichier secret spécifique
+my_secrets/
+
+token.pickle
+
+ venv/
