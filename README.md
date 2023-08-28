@@ -21,6 +21,7 @@ Exportation des baux générés au format PDF.
 > Accès API Notion activé.
 > Compte Google avec Google Docs et Drive.
 > Accès API Google activé.
+> python -m venv venv (configurer env virtuel)
 > Créer un répo mysecrets/ et un fichier  notion_secrets.py 
  avec 
  NOTION_API_SECRET = "key_to_your_notion_integration"
@@ -38,6 +39,7 @@ CLIENT_GOOGLE_SECRET_JSON_PATH = "path_to_google_api_secret_client.json"
 
 --------------------------------------------------------------------------------------------------------------------
 Execution 
+> venv\Scripts\activate
 > python main.py
 Les baux générés seront exportés en format PDF et dans votre drive format google doc
 
