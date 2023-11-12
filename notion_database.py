@@ -37,6 +37,18 @@ def build_replace_requests(data_dict):
         })
     return requests
 
+def add_one_request(field,value):
+    requests = []
+    requests.append({
+        'replaceAllText': {
+            'containsText': {
+                'text': f"{field}",
+                'matchCase': True,
+            },
+            'replaceText': value,
+        }
+    })
+    return requests
 
 def extract_fields_from_locataire_database(locataire_database):
     field_values_dict = {}
