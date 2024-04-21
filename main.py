@@ -101,15 +101,21 @@ for locataire in all_data['locataire']['results']:
                 chambre_dict = extract_fields_from_database(chambre)
                 print(chambre_dict)
 
+    # tout convertir en string
+    locataire_dict_str = {key: str(value) for key, value in locataire_dict.items()}
+    guarant_dict_str = {key: str(value) for key, value in garant_dict.items()}
+    bien_dict_str = {key: str(value) for key, value in bien_dict.items()}
+    chambre_dict_str  = {key: str(value) for key, value in chambre_dict.items()}
+
     all_replace_requests = []
-    all_replace_requests.extend(build_replace_requests(locataire_dict))
+    # Ajouter les dictionnaires convertis aux demandes de remplacement
+    all_replace_requests.extend(build_replace_requests(locataire_dict_str))
     if guarantor_id:
-        all_replace_requests.extend(build_replace_requests(garant_dict))
+        all_replace_requests.extend(build_replace_requests(guarant_dict_str))
     if bien_id:
-        all_replace_requests.extend(build_replace_requests(bien_dict))
+        all_replace_requests.extend(build_replace_requests(bien_dict_str))
     if chambre_id:
-        all_replace_requests.extend(build_replace_requests(chambre_dict))
-    
+        all_replace_requests.extend(build_replace_requests(chambre_dict_str))
     #print(all_replace_requests)
     # si commence et finit par {} et que le type est un nombre on le cast en 
     if activer_generation :
@@ -184,8 +190,6 @@ for locataire in all_data['locataire']['results']:
             # Recherche de la chambre avec l'ID spécifié
             chambre_recherchee = next((chambre for chambre in all_data['chambres']['results'] if chambre['id'] == chambre_id), None)
 
-            montant_charges = chambre['properties'].get('{MONTANT_CHARGES}', {}).get('number')
-
             charges = chambre['properties']['{MONTANT_CHARGES}']['number']  
             loyer = chambre['properties']['{MONTANT_LOYER}']['number']  
 
@@ -197,7 +201,10 @@ for locataire in all_data['locataire']['results']:
             prorata_loyer = loyer * prorata_total_CC / loyer_CC # produit en X
             prorata_charges = charges * prorata_total_CC / loyer_CC # produit en X
     
-                       
+            print(prorata_loyer) 
+            print(prorata_total_CC)              
+            print(prorata_charges)              
+             
             all_replace_requests_quittance_premier_mois = []
             all_replace_requests_quittance_premier_mois.extend(add_one_request("{{JOUR_ARRIVEE}}", str(jour_arrivee)))
             all_replace_requests_quittance_premier_mois.extend(add_one_request("{{MOIS_ARRIVEE}}", mois_courant))
@@ -212,12 +219,17 @@ for locataire in all_data['locataire']['results']:
             all_replace_requests_quittance_premier_mois.extend(add_one_request("{{MONTANT_LOYER}}", str(loyer)))
             all_replace_requests_quittance_premier_mois.extend(add_one_request("{{MONTANT_CHARGES}}", str(charges)))
 
-            quittance_premier_mois_doc_name = f"Quittance_de_loyer_{formatted_name}_{mois_courant}_{annee_courante}"
+            quittance_premier_mois_doc_name = f"Quittance_de_loyer_1er_mois_{formatted_name}_{mois_courant}_{annee_courante}"
 
             quittance_premier_mois = drive_service.files().copy(fileId=TEMPLATE_QUITTANCE_1_MOIS_ID, body={"name": quittance_premier_mois_doc_name}).execute()
             QUITTANCE_PREMIER_MOIS_ID = quittance_premier_mois['id']
-
+            print("-------------------------------------------------------")
             print(all_replace_requests)
+            print("-------------------------------------------------------")
+            print(locataire_dict)
+            print("-------------------------------------------------------")
+            print(chambre_dict)
+            print("-------------------------------------------------------")
             docs_service.documents().batchUpdate(documentId=QUITTANCE_PREMIER_MOIS_ID, body={'requests': all_replace_requests}).execute()
             docs_service.documents().batchUpdate(documentId=QUITTANCE_PREMIER_MOIS_ID, body={'requests': all_replace_requests_quittance_premier_mois}).execute()
 
