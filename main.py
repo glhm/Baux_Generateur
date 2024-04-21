@@ -21,7 +21,8 @@ current_month_with_accents = datetime.now().strftime('%B').capitalize()
 
 
 
-SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/gmail.send']
+SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive']
+          #, 'https://www.googleapis.com/auth/gmail.send']
 
 # Authentification et création des services
 creds = None
@@ -40,11 +41,14 @@ if not creds or not creds.valid:
 
 drive_service = build('drive', 'v3', credentials=creds)
 docs_service = build('docs', 'v1', credentials=creds)
+gmail_service = build('gmail', 'v1', credentials=creds)
 
 # ID du modèle Google Doc
 TEMPLATE_ID = '1JUeo7xhqobGXFKTejKc1O3wgo4RU0mZKqKSvBmhLnjw'
 CAUTION_ID = '1mtoeS2JrLf9eW6d4sfJZyEKXzPYIrNn6PcChAcgfmqI'
 TEMPLATE_QUITTANCE_ID = '1r9BDMtM2h37-eIZoCz0kzzdy_z0r3-caBC6atkPo-20'
+TEMPLATE_QUITTANCE_1_MOIS_ID = '1Ixo7-NVqqtTcg1lk8jl9dibKtAHA4ia5GjrlTvQDKUM'
+
 
 # 2. Modifiez le nouveau document
 all_data = {}
@@ -54,6 +58,8 @@ for locataire in all_data['locataire']['results']:
 
 
     # Vérification de la case ActiverGeneration
+   # print(locataire['properties'])
+
     activer_generation = locataire['properties'].get('ActiverGeneration', {}).get('checkbox', False)
     activer_generation_quittance = locataire['properties'].get('ActiverGenerationQuittances', {}).get('checkbox', False)
     envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
@@ -104,8 +110,8 @@ for locataire in all_data['locataire']['results']:
     if chambre_id:
         all_replace_requests.extend(build_replace_requests(chambre_dict))
     
-    print(all_replace_requests)
-
+    #print(all_replace_requests)
+    # si commence et finit par {} et que le type est un nombre on le cast en 
     if activer_generation :
         new_document_name = f"bail_location_{formatted_name}"
         new_caution_doc_name = f"Acte_de_caution_solidaire_{formatted_name}"
@@ -131,39 +137,94 @@ for locataire in all_data['locataire']['results']:
         export_doc_to_pdf(NEW_CAUTION_ID, new_caution_doc_name,drive_service)
 
     if activer_generation_quittance :
-        map_jour = [
-            {"Janvier": "31"}
-            ,{"Février": "28"},
-            {"Mars": "31"},
-            {"Avril": "30"},
-            {"Mai": "31"},
-            {"Juin": "30"},
-            {"Juillet": "31"},
-            {"Août": "31"},
-            {"Septembre": "30"},
-            {"Octobre": "31"},
-            {"Novembre": "30"},
-            {"Décembre": "31"}       
-        ]
+        for annee_courante in (2023,2024) :
+            map_jour = {
+    "Janvier": 31,
+    "Février": 28,  # Attention, février peut être de 28 ou 29 jours selon l'année (non pris en compte ici)
+    "Mars": 31,
+    "Avril": 30,
+    "Mai": 31,
+    "Juin": 30,
+    "Juillet": 31,
+    "Août": 31,
+    "Septembre": 30,
+    "Octobre": 31,
+    "Novembre": 30,
+    "Décembre": 31
+}
+            print(f"Annee :  {annee_courante}")
+            # for month_dict in map_jour:
+            #     all_replace_requests_month = []
+            #     key, value = month_dict.popitem()  # Directly get the key and value
+            #     print(f"Klef {key}, {value}")
+            #     all_replace_requests_month.extend(add_one_request("{{MOIS_COURANT}}",key))
+            #     all_replace_requests_month.extend(add_one_request("{{DERNIER_JOUR}}",value))
+            #     all_replace_requests_month.extend(add_one_request("{{ANNEE_COURANTE}}",str(annee_courante) ))
+            #     new_quittance_doc_name = f"Quittance_de_loyer_{formatted_name}_{key}_{annee_courante}"
+            #     delete_file_by_name(drive_service, new_quittance_doc_name)
 
-        for month_dict in map_jour:
-            key, value = list(month_dict.items())[0]
-            all_replace_requests.extend(add_one_request("{{MOIS_COURANT}}",key))
-            all_replace_requests.extend(add_one_request("{{DERNIER_JOUR}}",value))
+            #     copied_file = drive_service.files().copy(fileId=TEMPLATE_QUITTANCE_ID, body={"name": new_quittance_doc_name}).execute()
+            #     print(f"[INFO] Modèle copié avec succès. {new_quittance_doc_name}")
+            #     NEW_DOCUMENT_ID = copied_file['id']
 
-            all_replace_requests.extend(add_one_request("{{ANNEE_COURANTE}}",annee_courante ))
-            new_quittance_doc_name = f"Quittance_de_loyer_{formatted_name}_{key}_{annee_courante}"
-            delete_file_by_name(drive_service, new_quittance_doc_name)
+            #     docs_service.documents().batchUpdate(documentId=NEW_DOCUMENT_ID, body={'requests': all_replace_requests}).execute()
+            #     docs_service.documents().batchUpdate(documentId=NEW_DOCUMENT_ID, body={'requests': all_replace_requests_month}).execute()
 
-            copied_file = drive_service.files().copy(fileId=TEMPLATE_QUITTANCE_ID, body={"name": new_quittance_doc_name}).execute()
-            print(f"[INFO] Modèle copié avec succès. {new_quittance_doc_name}")
-            NEW_DOCUMENT_ID = copied_file['id']
+            #     print(f"[INFO] Champs remplacés pour {new_quittance_doc_name}.")
 
-            docs_service.documents().batchUpdate(documentId=NEW_DOCUMENT_ID, body={'requests': all_replace_requests}).execute()
-            print(f"[INFO] Champs remplacés pour {new_quittance_doc_name}.")
+            #     #Exporter le document modifié au format PDF
+            #     export_doc_to_pdf(NEW_DOCUMENT_ID, new_quittance_doc_name,drive_service)
+            # special month 
+            mois_courant = locataire['properties']['{MOIS_ARRIVEE}']['rich_text'][0]['text']['content']
+            jour_arrivee = locataire['properties']['{JOUR_ARRIVEE}']['number']  
 
-            #Exporter le document modifié au format PDF
-            export_doc_to_pdf(NEW_DOCUMENT_ID, new_quittance_doc_name,drive_service)
+            chambre_id = locataire['properties'].get('🛏️ Chambres', {}).get('relation', [])[0].get('id')
+
+
+            # Recherche de la chambre avec l'ID spécifié
+            chambre_recherchee = next((chambre for chambre in all_data['chambres']['results'] if chambre['id'] == chambre_id), None)
+
+            montant_charges = chambre['properties'].get('{MONTANT_CHARGES}', {}).get('number')
+
+            charges = chambre['properties']['{MONTANT_CHARGES}']['number']  
+            loyer = chambre['properties']['{MONTANT_LOYER}']['number']  
+
+            loyer_CC = loyer + charges 
+            dernier_jour = map_jour[mois_courant]
+            ratio =  jour_arrivee / dernier_jour
+            nombre_de_jours_premier_mois = (dernier_jour - jour_arrivee + 1 )
+            prorata_total_CC =  nombre_de_jours_premier_mois * (loyer_CC) / dernier_jour
+            prorata_loyer = loyer * prorata_total_CC / loyer_CC # produit en X
+            prorata_charges = charges * prorata_total_CC / loyer_CC # produit en X
+    
+                       
+            all_replace_requests_quittance_premier_mois = []
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{JOUR_ARRIVEE}}", str(jour_arrivee)))
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{MOIS_ARRIVEE}}", mois_courant))
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{ANNEE_COURANTE}}", str(annee_courante)))
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{DERNIER_JOUR}}", str(dernier_jour)))
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{NOMBRE_JOURS_PREMIER_MOIS}}", str(nombre_de_jours_premier_mois)))
+
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{PRORATA_LOYER}}", "{:.2f}".format((prorata_loyer))))
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{PRORATA_CHARGES}}", "{:.2f}".format((prorata_charges))))
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{PRORATA_TOTAL_CC}}", "{:.2f}".format((prorata_total_CC))))
+
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{MONTANT_LOYER}}", str(loyer)))
+            all_replace_requests_quittance_premier_mois.extend(add_one_request("{{MONTANT_CHARGES}}", str(charges)))
+
+            quittance_premier_mois_doc_name = f"Quittance_de_loyer_{formatted_name}_{mois_courant}_{annee_courante}"
+
+            quittance_premier_mois = drive_service.files().copy(fileId=TEMPLATE_QUITTANCE_1_MOIS_ID, body={"name": quittance_premier_mois_doc_name}).execute()
+            QUITTANCE_PREMIER_MOIS_ID = quittance_premier_mois['id']
+
+            print(all_replace_requests)
+            docs_service.documents().batchUpdate(documentId=QUITTANCE_PREMIER_MOIS_ID, body={'requests': all_replace_requests}).execute()
+            docs_service.documents().batchUpdate(documentId=QUITTANCE_PREMIER_MOIS_ID, body={'requests': all_replace_requests_quittance_premier_mois}).execute()
+
+            export_doc_to_pdf(QUITTANCE_PREMIER_MOIS_ID, quittance_premier_mois_doc_name,drive_service)
+
+
+
 
     if envoyer_quittance :
         # Utilisation de la fonction send_email
@@ -183,6 +244,6 @@ for locataire in all_data['locataire']['results']:
     #     # Le fichier n'existe pas, afficher un message ou prendre une autre action si nécessaire
     #     print(f"Le fichier {nom_fichier} n'existe pas.")
 
-        send_email(to_address, subject, body,'')
+    #    send_email(gmail_service,to_address, subject, body,'')
 
 

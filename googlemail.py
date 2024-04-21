@@ -1,38 +1,41 @@
+from googleapiclient.discovery import build
+from google.auth.transport.requests import Request
+import base64
+import mimetypes
+
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-from my_secrets.notion_secrets import SMTP_USERNAME
-from my_secrets.notion_secrets import SMTP_PWD
 
-def send_email(to_address, subject, body, attachment_path):
-    # Paramètres SMTP Gmail
-    smtp_server = 'smtp.gmail.com'
-    smtp_port = 587
-
-    # Destinataire et expéditeur
-    from_address = SMTP_USERNAME
-    to_address = to_address
-
+def send_email(service, to_address, subject, body, attachment_path):
     # Création du message
-    msg = MIMEMultipart()
-    msg['From'] = from_address
-    msg['To'] = to_address
-    msg['Subject'] = subject
+    message = MIMEMultipart()
+    message['to'] = to_address
+    message['subject'] = subject
 
     # Corps du message
-    msg.attach(MIMEText(body, 'plain'))
+    text = MIMEText(body)
+    message.attach(text)
 
-    if attachment_path != '' : 
-    # Pièce jointe
+    if attachment_path != '':
+        # Pièce jointe
         with open(attachment_path, 'rb') as attachment:
-            part = MIMEApplication(attachment.read())
-            part.add_header('Content-Disposition', 'attachment', filename=attachment_path)
-            msg.attach(part)
+            content_type, encoding = mimetypes.guess_type(attachment_path)
+            if content_type is None or encoding is not None:
+                content_type = 'application/octet-stream'
+            main_type, sub_type = content_type.split('/', 1)
+            attachment = MIMEApplication(attachment.read(), _subtype=sub_type)
+            attachment.add_header('Content-Disposition', 'attachment', filename=attachment_path)
+            message.attach(attachment)
 
-        # Connexion au serveur SMTP et envoi de l'e-mail
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(SMTP_USERNAME, SMTP_PWD)
-            server.sendmail(from_address, to_address, msg.as_string())
+    # Convertir le message en une chaîne encodée en base64
+    raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode('utf-8')
+
+    # Envoyer l'e-mail via l'API Gmail
+    try:
+        sent_message = service.users().messages().send(userId="me", body={'raw': raw_message}).execute()
+        print('Message Id: %s' % sent_message['id'])
+    except Exception as error:
+        print(f'An error occurred: {error}')
 

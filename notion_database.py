@@ -60,6 +60,9 @@ def extract_fields_from_locataire_database(locataire_database):
             field_values_dict[field_name] = field_data['rich_text'][0]['text']['content']
         elif 'title' in field_data and field_data['title']:
             field_values_dict[field_name] = field_data['title'][0]['text']['content']
+        elif 'number' in field_data and field_data['number']:  # Vérifier si le champ est de type nombre
+            field_values_dict[field_name] = field_data['number']
+
         # Vous pouvez ajouter d'autres conditions pour d'autres types de données si nécessaire
     if '🪙 Garants' in locataire_database['properties'] and locataire_database['properties']['🪙 Garants']['relation']:
         guarantor_id = locataire_database['properties']['🪙 Garants']['relation'][0]['id']
@@ -84,5 +87,7 @@ def extract_fields_from_database(notion_database_data):
             field_values_dict[field_name] = field_data['rich_text'][0]['text']['content']
         elif 'title' in field_data and field_data['title']:
             field_values_dict[field_name] = field_data['title'][0]['text']['content']
+        elif 'number' in field_data and field_data['number']:  # Vérifier si le champ est de type nombre
+            field_values_dict[field_name] = field_data['number']
 
     return field_values_dict
