@@ -55,7 +55,9 @@ docs_service = build('docs', 'v1', credentials=creds)
 gmail_service = build('gmail', 'v1', credentials=creds)
 
 # ID du modèle Google Doc
-TEMPLATE_ID = '1JUeo7xhqobGXFKTejKc1O3wgo4RU0mZKqKSvBmhLnjw'
+ID_TEMPLATE_BAIL_ETUDIANT = '1JUeo7xhqobGXFKTejKc1O3wgo4RU0mZKqKSvBmhLnjw'
+ID_TEMPLATE_BAIL_MEUBLE = '18VYMLwkmgNauvdPfBq6tmbxvBOq0FsPXmTxav1smXAw'
+
 CAUTION_ID = '1mtoeS2JrLf9eW6d4sfJZyEKXzPYIrNn6PcChAcgfmqI'
 TEMPLATE_QUITTANCE_ID = '1r9BDMtM2h37-eIZoCz0kzzdy_z0r3-caBC6atkPo-20'
 TEMPLATE_QUITTANCE_1_MOIS_ID = '1Ixo7-NVqqtTcg1lk8jl9dibKtAHA4ia5GjrlTvQDKUM'
@@ -70,7 +72,7 @@ for locataire in all_data['locataire']['results']:
 
     # Vérification de la case ActiverGeneration
    # print(locataire['properties'])
-
+    print(locataire['properties'])
     activer_generation = locataire['properties'].get('ActiverGeneration', {}).get('checkbox', False)
     activer_generation_quittance = locataire['properties'].get('ActiverGenerationQuittances', {}).get('checkbox', False)
     envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
@@ -80,7 +82,7 @@ for locataire in all_data['locataire']['results']:
 
     locataire_name = locataire['properties']['{NOM_LOCATAIRE}']['title'][0]['text']['content']
     print(f"Nouveau locataire {locataire_name}")
-    formatted_name = locataire_name.replace(" ", "_").replace("'", "_")
+    formatted_name = locataire_name.replace(" ", "_").replace("'", "_").replace(",", "")
 
     # Remplacer les champs du modèle par les données du locataire actuel
 
@@ -152,9 +154,11 @@ for locataire in all_data['locataire']['results']:
     prorata_total_CC =  nombre_de_jours_premier_mois * (loyer_CC) / dernier_jour
     prorata_loyer = loyer * prorata_total_CC / loyer_CC # produit en X
     prorata_charges = charges * prorata_total_CC / loyer_CC # produit en X
-    total_premier_mois = prorata_total_CC+ 2* loyer_CC # produit en X
-    
+    total_premier_mois = prorata_total_CC+ 2* loyer # produit en X
+    montant_garanties = 2*loyer
     annee_contrat = locataire['properties']['ANNEES']['multi_select'][0]['name']
+    mention_speciale_loyer_data = locataire['properties'].get('MENTION_SPECIALE_LOYER', {}).get('rich_text', [])
+    mention_speciale_loyer = mention_speciale_loyer_data[0]['text']['content'] if mention_speciale_loyer_data else ''   
     date_contrat = f"{jour_arrivee} {mois_courant} {annee_contrat}"
 
     #print(prorata_loyer) 
@@ -164,8 +168,11 @@ for locataire in all_data['locataire']['results']:
     all_replace_requests_quittance_premier_mois = []
     all_replace_requests.extend(add_one_request("{{TOTAL_1ER_MOIS}}", "{:.2f}".format((total_premier_mois))))
     all_replace_requests.extend(add_one_request("{{PRORATA_MOIS}}", "{:.2f}".format((prorata_total_CC)))) # doulon mais a supprimer plus tard
-
-    all_replace_requests.extend(add_one_request("{{JOUR_ARRIVEE}}", str(jour_arrivee)))
+    
+    if mention_speciale_loyer :
+        all_replace_requests.extend(add_one_request("{{MENTION_SPECIALE_LOYER}}", mention_speciale_loyer))
+    else :
+        all_replace_requests.extend(add_one_request("{{MENTION_SPECIALE_LOYER}}", ""))
 
     all_replace_requests.extend(add_one_request("{{DATE_CONTRAT}}",date_contrat))
 
@@ -179,6 +186,8 @@ for locataire in all_data['locataire']['results']:
 
     all_replace_requests.extend(add_one_request("{{MONTANT_LOYER}}", str(loyer)))
     all_replace_requests.extend(add_one_request("{{MONTANT_CHARGES}}", str(charges)))
+    all_replace_requests.extend(add_one_request("{{MONTANT_GARANTIES}}", str(montant_garanties)))
+
     all_replace_requests.extend(add_one_request("{{MONTANT_TOTAL}}", str(loyer_CC)))
 
 
@@ -189,8 +198,14 @@ for locataire in all_data['locataire']['results']:
             # print(locataire)  
         delete_file_by_name(drive_service, new_document_name)
         delete_file_by_name(drive_service, new_caution_doc_name)
+   
+        type_bail = locataire['properties'].get('TypeDeBail', {}).get('select', {}).get('name', '')
+        if type_bail == 'Etudiant':
+            template_id = ID_TEMPLATE_BAIL_ETUDIANT
+        else:
+            template_id = ID_TEMPLATE_BAIL_MEUBLE
 
-        copied_file = drive_service.files().copy(fileId=TEMPLATE_ID, body={"name": new_document_name}).execute()
+        copied_file = drive_service.files().copy(fileId=template_id, body={"name": new_document_name}).execute()
         print(f"[INFO] Modèle copié avec succès. {new_document_name}")
         NEW_DOCUMENT_ID = copied_file['id']
 
@@ -216,11 +231,9 @@ for locataire in all_data['locataire']['results']:
 
         for key, value in map_jour.items():
             all_replace_requests_month = []
-            print(f"Klef {key}, {value}")
+           # print(f"Klef {key}, {value}")
             all_replace_requests_month.extend(add_one_request("{{MOIS_COURANT}}",key))
             all_replace_requests_month.extend(add_one_request("{{DERNIER_JOUR}}",str(value)))
-            new_quittance_doc_name = f"Quittance_de_loyer_{formatted_name}_{key}_{annee_courante}"
-            delete_file_by_name(drive_service, new_quittance_doc_name)
             
             # if activer_generation_quittance :
 
@@ -239,6 +252,8 @@ for locataire in all_data['locataire']['results']:
         
         if activer_generation_quittance :
             # special month 
+            new_quittance_doc_name = f"Quittance_de_loyer_{formatted_name}_{key}_{annee_courante}"
+            delete_file_by_name(drive_service, new_quittance_doc_name)
             quittance_premier_mois_doc_name = f"Quittance_de_loyer_1er_mois_{formatted_name}_{mois_courant}_{annee_courante}"
             quittance_premier_mois = drive_service.files().copy(fileId=TEMPLATE_QUITTANCE_1_MOIS_ID, body={"name": quittance_premier_mois_doc_name}).execute()
             QUITTANCE_PREMIER_MOIS_ID = quittance_premier_mois['id']
