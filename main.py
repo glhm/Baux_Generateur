@@ -7,6 +7,7 @@ from notion_database import *
 from google_doc import *
 from datetime import datetime
 from googlemail import *
+from mystrings import *
 import locale
 
 from my_secrets.notion_secrets import CLIENT_GOOGLE_SECRET_JSON_PATH
@@ -55,7 +56,6 @@ docs_service = build('docs', 'v1', credentials=creds)
 gmail_service = build('gmail', 'v1', credentials=creds)
 
 # ID du modèle Google Doc
-ID_TEMPLATE_BAIL_ETUDIANT = '1JUeo7xhqobGXFKTejKc1O3wgo4RU0mZKqKSvBmhLnjw'
 ID_TEMPLATE_BAIL_MEUBLE = '18VYMLwkmgNauvdPfBq6tmbxvBOq0FsPXmTxav1smXAw'
 
 CAUTION_ID = '1mtoeS2JrLf9eW6d4sfJZyEKXzPYIrNn6PcChAcgfmqI'
@@ -189,7 +189,15 @@ for locataire in all_data['locataire']['results']:
     all_replace_requests.extend(add_one_request("{{MONTANT_GARANTIES}}", str(montant_garanties)))
 
     all_replace_requests.extend(add_one_request("{{MONTANT_TOTAL}}", str(loyer_CC)))
+    type_bail = locataire['properties'].get('TypeDeBail', {}).get('select', {}).get('name', '')
+    
+    if type_bail == 'Etudiant':
+        all_replace_requests.extend(add_one_request("{{PARAGRAPHE_DUREE_CONTRAT}}", bail_etudiant_duree))
+        all_replace_requests.extend(add_one_request("{{TYPE_BAIL_MEUBLE}}", bail_etudiant_titre))
 
+    else:
+        all_replace_requests.extend(add_one_request("{{PARAGRAPHE_DUREE_CONTRAT}}", bail_meuble_duree))
+        all_replace_requests.extend(add_one_request("{{TYPE_BAIL_MEUBLE}}", str("")))
 
     if activer_generation :
         new_document_name = f"bail_location_{formatted_name}"
@@ -199,13 +207,9 @@ for locataire in all_data['locataire']['results']:
         delete_file_by_name(drive_service, new_document_name)
         delete_file_by_name(drive_service, new_caution_doc_name)
    
-        type_bail = locataire['properties'].get('TypeDeBail', {}).get('select', {}).get('name', '')
-        if type_bail == 'Etudiant':
-            template_id = ID_TEMPLATE_BAIL_ETUDIANT
-        else:
-            template_id = ID_TEMPLATE_BAIL_MEUBLE
 
-        copied_file = drive_service.files().copy(fileId=template_id, body={"name": new_document_name}).execute()
+
+        copied_file = drive_service.files().copy(fileId=ID_TEMPLATE_BAIL_MEUBLE, body={"name": new_document_name}).execute()
         print(f"[INFO] Modèle copié avec succès. {new_document_name}")
         NEW_DOCUMENT_ID = copied_file['id']
 
