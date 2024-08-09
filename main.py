@@ -72,7 +72,6 @@ for locataire in all_data['locataire']['results']:
 
     # Vérification de la case ActiverGeneration
    # print(locataire['properties'])
-    print(locataire['properties'])
     activer_generation = locataire['properties'].get('ActiverGeneration', {}).get('checkbox', False)
     activer_generation_quittance = locataire['properties'].get('ActiverGenerationQuittances', {}).get('checkbox', False)
     envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
@@ -120,6 +119,22 @@ for locataire in all_data['locataire']['results']:
     chambre_dict_str  = {key: str(value) for key, value in chambre_dict.items()}
 
     all_replace_requests = []
+
+    type_caution = locataire['properties'].get('Garantie', {}).get('select', {}).get('name', '')
+
+    if type_caution == "Visale" :
+        all_replace_requests.extend(add_one_request("{{CAUTIONNEMENT}}", cautionnement_visale))
+        all_replace_requests.extend(add_one_request("{{LA_CAUTION}}", ""))
+        all_replace_requests.extend(add_one_request("{{SIGN_GARANT}}", ""))
+
+        all_replace_requests.extend(add_one_request("{{DOC_VISA}}", doc_visale))
+    else :
+        all_replace_requests.extend(add_one_request("{{CAUTIONNEMENT}}", cautionnement_physique))
+        all_replace_requests.extend(add_one_request("{{LA_CAUTION}}", la_caution_physique))
+        all_replace_requests.extend(add_one_request("{{SIGN_GARANT}}", signature_des_garants))
+        all_replace_requests.extend(add_one_request("{{DOC_VISA}}", ""))
+
+
     # Ajouter les dictionnaires convertis aux demandes de remplacement
     all_replace_requests.extend(build_replace_requests(locataire_dict_str))
     if guarantor_id:
@@ -194,36 +209,40 @@ for locataire in all_data['locataire']['results']:
     if type_bail == 'Etudiant':
         all_replace_requests.extend(add_one_request("{{PARAGRAPHE_DUREE_CONTRAT}}", bail_etudiant_duree))
         all_replace_requests.extend(add_one_request("{{TYPE_BAIL_MEUBLE}}", bail_etudiant_titre))
+        all_replace_requests.extend(add_one_request("{{DUREE_CONTRAT}}", duree_contrat_etudiant))
+
 
     else:
         all_replace_requests.extend(add_one_request("{{PARAGRAPHE_DUREE_CONTRAT}}", bail_meuble_duree))
+        all_replace_requests.extend(add_one_request("{{MENTION_RECONDUCTION_MEUBLE}}", reconduction_meuble))
+        all_replace_requests.extend(add_one_request("{{DUREE_CONTRAT}}", duree_contrat_meuble))
         all_replace_requests.extend(add_one_request("{{TYPE_BAIL_MEUBLE}}", str("")))
-
+    
     if activer_generation :
         new_document_name = f"bail_location_{formatted_name}"
         new_caution_doc_name = f"Acte_de_caution_solidaire_{formatted_name}"
 
             # print(locataire)  
         delete_file_by_name(drive_service, new_document_name)
-        delete_file_by_name(drive_service, new_caution_doc_name)
-   
-
-
         copied_file = drive_service.files().copy(fileId=ID_TEMPLATE_BAIL_MEUBLE, body={"name": new_document_name}).execute()
         print(f"[INFO] Modèle copié avec succès. {new_document_name}")
         NEW_DOCUMENT_ID = copied_file['id']
-
-        copied_file = drive_service.files().copy(fileId=CAUTION_ID, body={"name": new_caution_doc_name}).execute()
-        print(f"[INFO] Modèle copié avec succès. {new_caution_doc_name}")
-        NEW_CAUTION_ID = copied_file['id']
         docs_service.documents().batchUpdate(documentId=NEW_DOCUMENT_ID, body={'requests': all_replace_requests}).execute()
         print(f"[INFO] Champs remplacés pour {new_document_name}.")
-        docs_service.documents().batchUpdate(documentId=NEW_CAUTION_ID, body={'requests': all_replace_requests}).execute()
-        print(f"[INFO] Champs remplacés pour {new_caution_doc_name}.")
-
         #Exporter le document modifié au format PDF
         export_doc_to_pdf(NEW_DOCUMENT_ID, new_document_name,drive_service)
-        export_doc_to_pdf(NEW_CAUTION_ID, new_caution_doc_name,drive_service)
+
+        if type_caution == "Physique" :
+            delete_file_by_name(drive_service, new_caution_doc_name)
+            copied_file = drive_service.files().copy(fileId=CAUTION_ID, body={"name": new_caution_doc_name}).execute()
+            NEW_CAUTION_ID = copied_file['id']
+            print(f"[INFO] Modèle caution copié avec succès. {new_caution_doc_name}")
+            docs_service.documents().batchUpdate(documentId=NEW_CAUTION_ID, body={'requests': all_replace_requests}).execute()
+            print(f"[INFO] Champs remplacés pour {new_caution_doc_name}.")
+            export_doc_to_pdf(NEW_CAUTION_ID, new_caution_doc_name,drive_service)
+
+
+
 
     annee_selectionnees = locataire['properties']['ANNEES']['multi_select']
 
