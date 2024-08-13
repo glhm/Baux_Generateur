@@ -39,3 +39,4 @@ def send_email(service, to_address, subject, body, attachment_path):
     except Exception as error:
         print(f'An error occurred: {error}')
 
+
