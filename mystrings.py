@@ -30,3 +30,12 @@ cautionnement_visale = "Le locataire a obtenu une garantie Visale pour couvrir d
 signature_des_garants = "Signature du garant"
 
 doc_visale = "F - Le Visa Visale du locataire" 
+
+paragraphe_detail_du_reglement_quittance = "Avec arrivée le {{JOUR_ARRIVEE}} du mois : \n \
+Prorata au nombre de jour : \n \
+ ({{NOMBRE_JOURS_PREMIER_MOIS}} / {{DERNIER_JOUR}} * {{MONTANT_TOTAL}}), soit euros par mois \n \
+\n \
+- Part Loyer  = {{PRORATA_LOYER}} euros \n \
+- Part Charges = {{PRORATA_CHARGES}} euros"
+
+titre_detail_du_reglement_quittance = "DETAIL DU REGLEMENT"

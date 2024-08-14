@@ -140,10 +140,16 @@ for locataire in all_data['locataire']['results']:
                     else:
                         # Génération de la quittance du 1er mois
                         print("Generation Quittance 1er mois de loyer")
+                        quittance_requests = []
+                        quittance_requests.extend(add_one_request("{{SOMME_DUE}}", "{:.2f}".format(prorata_data["prorata_total_CC"])))
+                        quittance_requests.extend(add_one_request("{{JOUR_DEBUT_QUITTANCE}}", str(jour_arrivee)))
+                        quittance_requests.extend(add_one_request("{{TITRE_DETAIL_DU_REGLEMENT}}", titre_detail_du_reglement_quittance))
+                        quittance_requests.extend(add_one_request("{{PARAGRAPHE_DETAIL_REGLEMENT_QUITTANCES}}", paragraphe_detail_du_reglement_quittance))
+
                         process_document(
-                            template_id=TEMPLATE_QUITTANCE_1_MOIS_ID,
+                            template_id=TEMPLATE_QUITTANCE_ID,
                             new_document_name=new_quittance_doc_name,
-                            replace_requests=all_replace_requests + annees_requests+ all_replace_requests_month,
+                            replace_requests=quittance_requests+all_replace_requests + annees_requests+ all_replace_requests_month,
                             folder_id=ID_REPO_QUITTANCES,
                             drive_service=drive_service,
                             docs_service=docs_service
@@ -153,14 +159,19 @@ for locataire in all_data['locataire']['results']:
                         start_generation_quittances = True
                 else:
                     # Génération des quittances normales pour tous les mois
+                    quittance_requests = []
+                    quittance_requests.extend(add_one_request("{{SOMME_DUE}}", "{:.2f}".format(prorata_data["loyer_CC"])))
+                    quittance_requests.extend(add_one_request("{{JOUR_DEBUT_QUITTANCE}}", "1"))
+                    quittance_requests.extend(add_one_request("{{TITRE_DETAIL_DU_REGLEMENT}}", ""))
+                    quittance_requests.extend(add_one_request("{{PARAGRAPHE_DETAIL_REGLEMENT_QUITTANCES}}", ""))
                     process_document(
                     template_id=TEMPLATE_QUITTANCE_ID,
                     new_document_name=new_quittance_doc_name,
-                    replace_requests=all_replace_requests + annees_requests + all_replace_requests_month,
+                    replace_requests=quittance_requests+all_replace_requests + annees_requests + all_replace_requests_month,
                     folder_id=ID_REPO_QUITTANCES,
                     drive_service=drive_service,
                     docs_service=docs_service
-                )
+                    )
 
     if envoyer_quittance:
         print(f"Envoi quittance locataire {locataire_name}")

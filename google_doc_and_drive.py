@@ -130,7 +130,7 @@ def delete_existing_file_if_exists(drive_service, file_name, folder_id):
 def delete_file_by_id(file_id, drive_service):
     try:
         drive_service.files().delete(fileId=file_id).execute()
-        print(f"[INFO] Fichier avec l'ID {file_id} supprimé avec succès.")
+        print(f"Fichier avec l'ID {file_id} supprimé avec succès.")
     except Exception as e:
         print(f"[ERROR] Une erreur est survenue lors de la suppression du fichier avec l'ID {file_id}: {e}")
 
