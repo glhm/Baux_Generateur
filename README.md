@@ -36,7 +36,8 @@ CLIENT_GOOGLE_SECRET_JSON_PATH = "path_to_google_api_secret_client.json"
 > Dans le repo "pip install -r requirements.txt
 > Assurez-vous d'avoir configuré vos bases de données Notion avec des colonnes nommées {COLONNE} et les données nécessaires. Dans le fichier le texte à remplacer doit être de la forme {{COLONNE}}
 
-
+--------------------------------------------------------------------------------------------------------------------
+A la première authentification token.pickle est généré et utilisé pour stocker les informations d'authentification après que l'utilisateur se soit authentifié pour la première fois avec OAuth 2.0.
 --------------------------------------------------------------------------------------------------------------------
 Execution 
 > venv\Scripts\activate

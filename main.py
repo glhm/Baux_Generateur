@@ -45,24 +45,6 @@ def process_document(template_id, new_document_name, replace_requests, folder_id
     except Exception as e:
         print(f"[ERROR] Une erreur est survenue lors du traitement du document {new_document_name}: {e}")
 
-
-# Définir la localisation sur "fr_FR"
-locale.setlocale(locale.LC_TIME, 'fr_FR')
-
-# Obtenir le nom du mois actuel avec des accents
-current_month_with_accents = datetime.now().strftime('%B').capitalize()
-
-# Chemin vers les répertoires "output/baux" et "output/quittances"
-output_baux_dir = os.path.join(os.path.dirname(__file__), 'output', 'baux')
-output_quittances_dir = os.path.join(os.path.dirname(__file__), 'output', 'quittances')
-
-# Créer les répertoires s'ils n'existent pas
-os.makedirs(output_baux_dir, exist_ok=True)
-os.makedirs(output_quittances_dir, exist_ok=True)
-
-print(output_baux_dir)
-print(output_quittances_dir)
-
 map_jour = {
                 "Janvier": 31,
                 "Février": 28,  # Attention, février peut être de 28 ou 29 jours selon l'année (non pris en compte ici)
@@ -110,6 +92,8 @@ TEMPLATE_QUITTANCE_ID = '1r9BDMtM2h37-eIZoCz0kzzdy_z0r3-caBC6atkPo-20'
 TEMPLATE_QUITTANCE_1_MOIS_ID = '1Ixo7-NVqqtTcg1lk8jl9dibKtAHA4ia5GjrlTvQDKUM'
 
 ID_REPO_QUITTANCES = '16zx1IkNaOPAMqXddqyxwYhHBR72Twfxy'
+ID_REPO_BAUX = '1ZvvwxfDETtw2g34HndCxYnDKO8jr_DYL'
+
 # 2. Modifiez le nouveau document
 all_data = {}
 retrieve_notion_datas(all_data)
@@ -119,11 +103,11 @@ for locataire in all_data['locataire']['results']:
 
     # Vérification de la case ActiverGeneration
    # print(locataire['properties'])
-    activer_generation = locataire['properties'].get('ActiverGeneration', {}).get('checkbox', False)
+    activer_generation_baux = locataire['properties'].get('ActiverGeneration', {}).get('checkbox', False)
     activer_generation_quittance = locataire['properties'].get('ActiverGenerationQuittances', {}).get('checkbox', False)
     envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
 
-    if not activer_generation and not activer_generation_quittance and not envoyer_quittance:
+    if not activer_generation_baux and not activer_generation_quittance and not envoyer_quittance:
         continue  # Si la case n'est pas cochée, on passe au locataire suivant
 
     locataire_name = locataire['properties']['{NOM_LOCATAIRE}']['title'][0]['text']['content']
@@ -208,8 +192,8 @@ for locataire in all_data['locataire']['results']:
     loyer = chambre_dict['{MONTANT_LOYER}']
 
     loyer_CC = loyer + charges 
-    print("Le Loyer vaut")
-    print(loyer_CC)
+ #   print("Le Loyer vaut")
+ #   print(loyer_CC)
     dernier_jour = map_jour[mois_arrivee]
     ratio =  jour_arrivee / dernier_jour
     nombre_de_jours_premier_mois = (dernier_jour - jour_arrivee + 1 )
@@ -265,15 +249,14 @@ for locataire in all_data['locataire']['results']:
         all_replace_requests.extend(add_one_request("{{DUREE_CONTRAT}}", duree_contrat_meuble))
         all_replace_requests.extend(add_one_request("{{TYPE_BAIL_MEUBLE}}", str("")))
     
-    if activer_generation :
+    if activer_generation_baux :
         new_document_name = f"bail_location_{formatted_name}"
-        #new_caution_doc_name = f"Acte_de_caution_solidaire_{formatted_name}"
 
         process_document(
         template_id=ID_TEMPLATE_BAIL_MEUBLE,
         new_document_name=new_document_name,
         replace_requests=all_replace_requests,
-        output_dir=output_baux_dir,
+        folder_id=ID_REPO_BAUX,
         drive_service=drive_service,
         docs_service=docs_service
         )
@@ -284,77 +267,100 @@ for locataire in all_data['locataire']['results']:
                 template_id=CAUTION_ID,
                 new_document_name=new_caution_doc_name,
                 replace_requests=all_replace_requests,
-                output_dir=output_baux_dir,
+                folder_id=ID_REPO_BAUX,
                 drive_service=drive_service,
                 docs_service=docs_service
             )
 
-    annee_selectionnees = locataire['properties']['ANNEES']['multi_select']
+    if activer_generation_quittance :
+        annee_selectionnees = locataire['properties']['ANNEES']['multi_select']
 
-    print(annee_selectionnees)
-    start_generation_quittances = False  # Variable pour indiquer quand commencer à générer les quittances normales
+        print(annee_selectionnees)
+        start_generation_quittances = False  # Variable pour indiquer quand commencer à générer les quittances normales
 
-    for annee in annee_selectionnees:
-        annee_courante = annee['name']
-        annees_requests = []
-        annees_requests.extend(add_one_request("{{ANNEE_COURANTE}}", annee_courante))
+        for annee in annee_selectionnees:
+            annee_courante = annee['name']
+            annees_requests = []
+            annees_requests.extend(add_one_request("{{ANNEE_COURANTE}}", annee_courante))
 
-        for key, value in map_jour.items():
-            all_replace_requests_month = []
-            all_replace_requests_month.extend(add_one_request("{{MOIS_COURANT}}", key))
-            all_replace_requests_month.extend(add_one_request("{{DERNIER_JOUR}}", str(value)))
-            
-            # Modifier le nom du fichier de quittance pour qu'il suive le format "Quittance_de_loyer_12_2025_Nom_Personne"
+            for key, value in map_jour.items():
+                all_replace_requests_month = []
+                all_replace_requests_month.extend(add_one_request("{{MOIS_COURANT}}", key))
+                all_replace_requests_month.extend(add_one_request("{{DERNIER_JOUR}}", str(value)))
+                
+                # Modifier le nom du fichier de quittance pour qu'il suive le format "Quittance_de_loyer_12_2025_Nom_Personne"
 
-            mois_numero = mois_list.index(key) + 1  # Convertir le nom du mois en son numéro (ex: Janvier -> 1)
-            mois_numero_str = f"{mois_numero:02}"  # Formater le numéro du mois sur deux chiffres (ex: 01, 02, ..., 12)
-            new_quittance_doc_name = f"Quittance_de_loyer_{annee_courante}_{mois_numero_str}_{formatted_name}"
+                mois_numero = mois_list.index(key) + 1  # Convertir le nom du mois en son numéro (ex: Janvier -> 1)
+                mois_numero_str = f"{mois_numero:02}"  # Formater le numéro du mois sur deux chiffres (ex: 01, 02, ..., 12)
+                new_quittance_doc_name = f"Quittance_de_loyer_{annee_courante}_{mois_numero_str}_{formatted_name}"
 
-            if not start_generation_quittances:  
-                # Si la génération des quittances normales n'a pas encore commencé
-                if mois_arrivee != key:
-                    continue  # Ignore les mois avant le mois d'arrivée
+                if not start_generation_quittances:  
+                    # Si la génération des quittances normales n'a pas encore commencé
+                    if mois_arrivee != key:
+                        continue  # Ignore les mois avant le mois d'arrivée
+                    else:
+                        # Génération de la quittance du 1er mois
+                        print("Generation Quittance 1er mois de loyer")
+                        process_document(
+                            template_id=TEMPLATE_QUITTANCE_1_MOIS_ID,
+                            new_document_name=new_quittance_doc_name,
+                            replace_requests=all_replace_requests + annees_requests+ all_replace_requests_month,
+                            folder_id=ID_REPO_QUITTANCES,
+                            drive_service=drive_service,
+                            docs_service=docs_service
+                        )
+
+                        # Marquer le début de la génération des quittances normales
+                        start_generation_quittances = True
                 else:
-                    # Génération de la quittance du 1er mois
-                    print("Generation Quittance 1er mois de loyer")
+                    # Génération des quittances normales pour tous les mois
                     process_document(
-                        template_id=TEMPLATE_QUITTANCE_1_MOIS_ID,
-                        new_document_name=new_quittance_doc_name,
-                        replace_requests=all_replace_requests + annees_requests,
-                        output_dir=output_quittances_dir,
-                        drive_service=drive_service,
-                        docs_service=docs_service
-                    )
+                    template_id=TEMPLATE_QUITTANCE_ID,
+                    new_document_name=new_quittance_doc_name,
+                    replace_requests=all_replace_requests + annees_requests + all_replace_requests_month,
+                    folder_id=ID_REPO_QUITTANCES,
+                    drive_service=drive_service,
+                    docs_service=docs_service
+                )
 
-                    # Marquer le début de la génération des quittances normales
-                    start_generation_quittances = True
-            else:
-                # Génération des quittances normales pour tous les mois
-                process_document(
-                template_id=TEMPLATE_QUITTANCE_ID,
-                new_document_name=new_quittance_doc_name,
-                replace_requests=all_replace_requests + annees_requests + all_replace_requests_month,
-                output_dir=output_quittances_dir,
-                drive_service=drive_service,
-                docs_service=docs_service
+    if envoyer_quittance:
+        print(f"Envoi quittance locataire {locataire_name}")
+        current_date = datetime.now()
+        current_year = current_date.strftime('%Y')
+        current_month_num = current_date.strftime('%m')  # Mois sous forme de numéro
+        mail_locataire = locataire['properties']['Mail']['rich_text'][0]['text']['content']
+        
+        # Construire le nom du fichier de quittance attendu
+        nom_fichier = f"Quittance_de_loyer_{current_year}_{current_month_num}_{formatted_name}"
+        
+        # Utiliser la fonction de recherche de fichier dans Google Drive
+        query = f"name='{nom_fichier}' and '{ID_REPO_QUITTANCES}' in parents"
+        results = drive_service.files().list(q=query, fields="files(id, name)").execute()
+        files = results.get('files', [])
+
+        if files:
+            file_id = files[0]['id']
+            file_stream = download_file_from_drive(file_id, drive_service)
+            print(f"Fichier {nom_fichier} trouvé")
+
+            # Envoyer l'email avec la pièce jointe téléchargée
+            send_email_with_attachment(
+                to_address=mail_locataire,
+                subject=f'Quittance de loyer {current_month_num} {current_year} {locataire_name}',
+                body='Veuillez trouver ci-joint votre quittance de loyer.\n\nBien à vous,\nGuilhem Gerbault',
+                attachment_stream=file_stream,
+                attachment_name=nom_fichier,
+                gmail_service=gmail_service
             )
-
-    if envoyer_quittance :
-        # Utilisation de la fonction send_email
-        to_address = mail_value = locataire['properties']['Mail']['rich_text'][0]['text']['content']
-        subject = f'Quittance de loyer {current_month_with_accents} {annee_courante}'
-        body = 'Veuillez trouver ci-joint votre quittance de loyer.\n\nBien à vous,\nGuilhem Gerbault'
-        nom_fichier = f"Quittance_de_loyer_{formatted_name}_{current_month_with_accents}_{annee_courante}.pdf" 
-        attachment_path = f'D:\\Guilhem\\Documents\\documents immo\\\Quittances_a_envoyer\\{nom_fichier}'
-
-        # Vérifier si le fichier existe
-        if os.path.exists(attachment_path):
-            # Le fichier existe, alors appeler la fonction send_email
-            print(f"Quittance à envoyer existe, Envoi mail à l'adresse {to_address}.\n Sujet : {subject} \n body : {body}\n attachment_path : {attachment_path}")
-            send_email(to_address, subject, body, attachment_path)
         else:
-            # Le fichier n'existe pas, afficher un message ou prendre une autre action si nécessaire
-            print(f"Le fichier {nom_fichier} n'existe pas.")
-            send_email(gmail_service,"gerbault.guilhem@gmail.com", "subject", "body",'')
-
-
+            error_message = f"Le fichier {nom_fichier} n'a pas été trouvé dans Google Drive."
+            print(error_message)
+            
+            send_email_with_attachment(
+                to_address="gerbault.guilhem@gmail.com",
+                subject=f"[ERREUR] Quittance de loyer {current_month_num} {current_year} {locataire_name}",
+                body=f"Détails de l'erreur : {error_message}",
+                attachment_stream=None,  # Pas de pièce jointe
+                attachment_name='',  # Nom vide
+                gmail_service=gmail_service
+            )
