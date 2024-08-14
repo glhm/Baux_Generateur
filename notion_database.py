@@ -1,5 +1,6 @@
 import requests
-from my_secrets.notion_secrets import NOTION_API_SECRET,DATABASE_IDS
+from my_secrets.notion_secrets import NOTION_API_SECRET
+from info_apis import DATABASE_IDS
 
 headers = {
     "Authorization": f"Bearer {NOTION_API_SECRET}",
