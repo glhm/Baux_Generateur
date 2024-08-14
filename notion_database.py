@@ -12,6 +12,25 @@ def fetch_data_from_notion(database_id):
     response = requests.post(f"https://api.notion.com/v1/databases/{database_id}/query", headers=headers)
     return response.json()
 
+def extract_related_data(data_type, info_rollup, all_data):
+    """
+    Extrait les informations associées à un type de données spécifique à partir des données complètes.
+
+    :param data_type: Type de données à extraire ('garants', 'bien', 'chambres').
+    :param info_rollup: Dictionnaire contenant les ID des données associées.
+    :param all_data: Dictionnaire contenant toutes les données.
+    :return: Dictionnaire avec les informations extraites.
+    """
+    data_id = info_rollup.get(f'{data_type}')
+    if not data_id:
+        return {}
+
+    # Recherche dans les données complètes
+    for item in all_data[data_type]['results']:
+        if item['id'] == data_id:
+            return extract_fields_from_database(item)
+    
+    return {}
 
 def retrieve_notion_datas(all_data):
     for name, database_id in DATABASE_IDS.items():
@@ -51,20 +70,34 @@ def add_one_request(field,value):
     })
     return requests
 
-def extract_fields_from_locataire_database(locataire_database):
+def extract_fields(properties):
+    """
+    Extrait les valeurs des champs des propriétés de la base de données Notion.
+
+    :param properties: Dictionnaire contenant les propriétés de l'élément Notion.
+    :return: Dictionnaire avec les champs extraits.
+    """
     field_values_dict = {}
-    info_rollup = {}
-    for field_name, field_data in locataire_database['properties'].items():
+    for field_name, field_data in properties.items():
         if 'text' in field_data and field_data['text']:
             field_values_dict[field_name] = field_data['text'][0]['text']['content']
-        if 'rich_text' in field_data and field_data['rich_text']:
+        elif 'rich_text' in field_data and field_data['rich_text']:
             field_values_dict[field_name] = field_data['rich_text'][0]['text']['content']
         elif 'title' in field_data and field_data['title']:
             field_values_dict[field_name] = field_data['title'][0]['text']['content']
-        elif 'number' in field_data and field_data['number']:  # Vérifier si le champ est de type nombre
+        elif 'number' in field_data and field_data['number']:
             field_values_dict[field_name] = field_data['number']
+    
+    return field_values_dict
 
-        # Vous pouvez ajouter d'autres conditions pour d'autres types de données si nécessaire
+def extract_fields_from_locataire_database(locataire_database):
+    """
+    Extrait les valeurs des champs spécifiques à la base de données des locataires
+    et les relations vers d'autres données.
+    """
+    field_values_dict = extract_fields(locataire_database['properties'])
+    info_rollup = {}
+
     if '🪙 Garants' in locataire_database['properties'] and locataire_database['properties']['🪙 Garants']['relation']:
         guarantor_id = locataire_database['properties']['🪙 Garants']['relation'][0]['id']
         info_rollup['guarantor_id'] = guarantor_id
@@ -75,20 +108,10 @@ def extract_fields_from_locataire_database(locataire_database):
         chambre_id = locataire_database['properties']['🛏️ Chambres']['relation'][0]['id']
         info_rollup['chambre_id'] = chambre_id
 
-    return field_values_dict,info_rollup
-
-
+    return field_values_dict, info_rollup
 
 def extract_fields_from_database(notion_database_data):
-    field_values_dict = {}
-    for field_name, field_data in notion_database_data['properties'].items():
-        if 'text' in field_data and field_data['text']:
-            field_values_dict[field_name] = field_data['text'][0]['text']['content']
-        if 'rich_text' in field_data and field_data['rich_text']:
-            field_values_dict[field_name] = field_data['rich_text'][0]['text']['content']
-        elif 'title' in field_data and field_data['title']:
-            field_values_dict[field_name] = field_data['title'][0]['text']['content']
-        elif 'number' in field_data and field_data['number']:  # Vérifier si le champ est de type nombre
-            field_values_dict[field_name] = field_data['number']
-
-    return field_values_dict
+    """
+    Extrait les valeurs des champs d'une base de données Notion spécifique.
+    """
+    return extract_fields(notion_database_data['properties'])

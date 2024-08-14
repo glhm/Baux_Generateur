@@ -39,7 +39,7 @@ CLIENT_GOOGLE_SECRET_JSON_PATH = "path_to_google_api_secret_client.json"
 --------------------------------------------------------------------------------------------------------------------
 A la première authentification token.pickle est généré et utilisé pour stocker les informations d'authentification après que l'utilisateur se soit authentifié pour la première fois avec OAuth 2.0.
 --------------------------------------------------------------------------------------------------------------------
-Execution 
+Execution Locale
 > venv\Scripts\activate
 > python main.py
 Les baux générés seront exportés en format PDF et dans votre drive format google doc

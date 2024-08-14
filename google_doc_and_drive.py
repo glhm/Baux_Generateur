@@ -1,8 +1,39 @@
-
 import io
-import os 
-from googleapiclient.http import MediaIoBaseDownload,MediaIoBaseUpload
-from googleapiclient.errors import HttpError  
+import os
+import pickle
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
+from googleapiclient.errors import HttpError
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
+
+from my_secrets.notion_secrets import CLIENT_GOOGLE_SECRET_JSON_PATH  # Importez le chemin vers le fichier de secrets
+
+SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive'
+          , 'https://www.googleapis.com/auth/gmail.send']
+
+def authenticate_and_create_services():
+
+    # Authentification et création des services
+    creds = None
+    if os.path.exists('token.pickle'):
+        with open('token.pickle', 'rb') as token:
+            creds = pickle.load(token)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_GOOGLE_SECRET_JSON_PATH, SCOPES)
+            creds = flow.run_local_server(port=0)
+            with open('token.pickle', 'wb') as token:
+                pickle.dump(creds, token)
+
+    drive_service = build('drive', 'v3', credentials=creds)
+    docs_service = build('docs', 'v1', credentials=creds)
+    gmail_service = build('gmail', 'v1', credentials=creds)
+
+    return drive_service, docs_service, gmail_service
 
 def export_doc_to_pdf(document_id, document_name, drive_service, output_path):
     request = drive_service.files().export_media(fileId=document_id, mimeType='application/pdf')
@@ -102,3 +133,35 @@ def delete_file_by_id(file_id, drive_service):
         print(f"[INFO] Fichier avec l'ID {file_id} supprimé avec succès.")
     except Exception as e:
         print(f"[ERROR] Une erreur est survenue lors de la suppression du fichier avec l'ID {file_id}: {e}")
+
+def process_document(template_id, new_document_name, replace_requests, folder_id, drive_service, docs_service):
+    """
+    Copie un modèle Google Docs, remplace les champs, exporte en PDF et supprime le fichier du Drive.
+
+    Args:
+    - template_id (str): ID du modèle à copier.
+    - new_document_name (str): Nom du nouveau document.
+    - replace_requests (list): Liste des requêtes pour remplacer les champs dans le document.
+    - output_dir (str): Répertoire où le PDF sera sauvegardé.
+    - drive_service (googleapiclient.discovery.Resource): Service Google Drive.
+    - docs_service (googleapiclient.discovery.Resource): Service Google Docs.
+    """
+
+    try:
+        # Copier le modèle
+        copied_file = drive_service.files().copy(fileId=template_id, body={"name": new_document_name}).execute()
+        document_id = copied_file['id']
+        print(f"[INFO] Modèle copié avec succès. {new_document_name}")
+
+        # Mettre à jour les champs du document
+        docs_service.documents().batchUpdate(documentId=document_id, body={'requests': replace_requests}).execute()
+        print(f"[INFO] Champs remplacés pour {new_document_name}.")
+
+        # Exporter le document au format PDF
+        export_doc_to_pdf_and_upload(document_id, drive_service, folder_id, new_document_name)
+
+        # Supprimer le fichier du Drive après exportation
+        delete_file_by_id(document_id, drive_service)
+
+    except Exception as e:
+        print(f"[ERROR] Une erreur est survenue lors du traitement du document {new_document_name}: {e}")
