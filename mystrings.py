@@ -33,7 +33,7 @@ doc_visale = "F - Le Visa Visale du locataire"
 
 paragraphe_detail_du_reglement_quittance = "Avec arrivée le {{JOUR_ARRIVEE}} du mois : \n \
 Prorata au nombre de jour : \n \
- ({{NOMBRE_JOURS_PREMIER_MOIS}} / {{DERNIER_JOUR}} * {{MONTANT_TOTAL}}), soit euros par mois \n \
+ ({{NOMBRE_JOURS_PREMIER_MOIS}} / {{DERNIER_JOUR}} * {{MONTANT_TOTAL}}), soit {{PRORATA_TOTAL_CC}} euros par mois \n \
 \n \
 - Part Loyer  = {{PRORATA_LOYER}} euros \n \
 - Part Charges = {{PRORATA_CHARGES}} euros"
