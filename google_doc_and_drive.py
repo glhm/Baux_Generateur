@@ -1,20 +1,21 @@
 import io
 import os
 import pickle
+import json
+
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 from googleapiclient.errors import HttpError
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 
-from my_secrets.notion_secrets import CLIENT_GOOGLE_SECRET_JSON_PATH  # Importez le chemin vers le fichier de secrets
-
 SCOPES = ['https://www.googleapis.com/auth/documents', 'https://www.googleapis.com/auth/drive'
           , 'https://www.googleapis.com/auth/gmail.send']
 
-def authenticate_and_create_services():
 
-    # Authentification et création des services
+def authenticate_and_create_services():
+    """Authenticate and create Google API services."""
+    
     creds = None
     if os.path.exists('token.pickle'):
         with open('token.pickle', 'rb') as token:
@@ -24,7 +25,15 @@ def authenticate_and_create_services():
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_GOOGLE_SECRET_JSON_PATH, SCOPES)
+            # Lire le contenu du JSON depuis la variable d'environnement
+            client_secret_json = os.getenv('GOOGLE_CLIENT_SECRET_JSON')
+            if client_secret_json is None:
+                raise ValueError("La variable d'environnement 'GOOGLE_CLIENT_SECRET_JSON' n'est pas définie.")
+
+            # Charger les informations de client_secret depuis le JSON
+            client_secret_info = json.loads(client_secret_json)
+            flow = InstalledAppFlow.from_client_config(client_secret_info, SCOPES)
+            
             creds = flow.run_local_server(port=0)
             with open('token.pickle', 'wb') as token:
                 pickle.dump(creds, token)

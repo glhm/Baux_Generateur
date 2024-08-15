@@ -1,14 +1,17 @@
 import requests
-from my_secrets.notion_secrets import NOTION_API_SECRET
+import os
 from info_apis import DATABASE_IDS
-
-headers = {
-    "Authorization": f"Bearer {NOTION_API_SECRET}",
-    "Notion-Version": "2022-06-28",  # Cette version peut évoluer, consultez la documentation Notion
-}
 
 
 def fetch_data_from_notion(database_id):
+    notion_api_secret = os.getenv('NOTION_API_SECRET')
+    if notion_api_secret is None:
+        raise ValueError("La variable d'environnement 'NOTION_API_SECRET' n'est pas définie.")
+    headers = {
+    "Authorization": f"Bearer {notion_api_secret}",
+    "Notion-Version": "2022-06-28",  # Cette version peut évoluer, consultez la documentation Notion
+    }
+
     response = requests.post(f"https://api.notion.com/v1/databases/{database_id}/query", headers=headers)
     return response.json()
 
