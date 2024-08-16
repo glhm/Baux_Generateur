@@ -80,13 +80,14 @@ def main(event=None, context=None):
     # 2. Modifiez le nouveau document
     all_data = {}
     retrieve_notion_datas(all_data)
-
     for locataire in all_data['locataire']['results']:
         # Vérification de la case ActiverGeneration
+       # print(locataire)
         activer_generation_baux = locataire['properties'].get('ActiverGeneration', {}).get('checkbox', False)
         activer_generation_quittance = locataire['properties'].get('ActiverGenerationQuittances', {}).get('checkbox', False)
         envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
-
+        # Pour update à l'envoi des quittances 
+        ENVOI_QUITTANCE_RESULT_id = locataire['properties'].get('EnvoiQuittanceResult', {}).get('id')
         locataire_name = locataire['properties']['{NOM_LOCATAIRE}']['title'][0]['text']['content']
         formatted_name = locataire_name.replace(" ", "_").replace("'", "_").replace(",", "")
 
@@ -201,6 +202,7 @@ def main(event=None, context=None):
             query = f"name='{nom_fichier}' and '{ID_REPO_QUITTANCES}' in parents"
             results = drive_service.files().list(q=query, fields="files(id, name)").execute()
             files = results.get('files', [])
+ 
 
             if files:
                 file_id = files[0]['id']
@@ -216,6 +218,9 @@ def main(event=None, context=None):
                     attachment_name=nom_fichier,
                     gmail_service=gmail_service
                 )
+                print("Update champ EnvoiQuittanceResult à Success")
+                update_notion_property(locataire['id'], ENVOI_QUITTANCE_RESULT_id, QUITTANCE_RESULT_IDS["QuittanceSuccess"])
+
             else:
                 error_message = f"Le fichier {nom_fichier} n'a pas été trouvé dans Google Drive."
                 print(error_message)
@@ -228,7 +233,8 @@ def main(event=None, context=None):
                     attachment_name='',  # Nom vide
                     gmail_service=gmail_service
                 )
-
+                print("Update champ EnvoiQuittanceResult à Failure")
+                update_notion_property(locataire['id'], ENVOI_QUITTANCE_RESULT_id, QUITTANCE_RESULT_IDS["QuittanceFailure"])
 
 # Point d'entrée pour le script
 if __name__ == "__main__":

@@ -13,3 +13,8 @@ DATABASE_IDS = {
      "chambres": "1d87115fd83d4df6a54376c7c2c8d495",
      "garants": "a3f2eaf45ee34d2bbf58922af689e941"
 }
+
+QUITTANCE_RESULT_IDS = {
+     "QuittanceSuccess" : "124546fa-5451-4b30-b1ac-5122f7740d6e",
+     "QuittanceFailure" : "8958d57d-eac7-471d-b1bc-51e9f12e45c3"
+}
