@@ -45,3 +45,10 @@ Execution Locale
 Les baux générés seront exportés en format PDF et dans votre drive format google doc
 
 
+--------------------------------------------------------------------------------------------------------------------
+copier les libs dans lambda_deploy 
+xcopy /E /I C:\Users\Guilhem\workspace\BauxGenerateur\venv\Lib\site-packages\* C:\Users\Guilhem\workspace\BauxGenerateur\lambda_deploy\
+
+
+pour copier les .py et zipper 
+> deploy_lambda.cmd
