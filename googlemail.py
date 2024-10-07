@@ -38,7 +38,9 @@ def send_email_with_attachment(to_address, subject, body, attachment_stream, att
         # Envoyer l'email en utilisant l'API Gmail
         sent_message = gmail_service.users().messages().send(userId='me', body={'raw': raw_message}).execute()
         print(f"[INFO] E-mail envoyé avec succès. Message ID: {sent_message['id']}")
+        return True
     except HttpError as error:
         print(f"[ERROR] Une erreur s'est produite lors de l'envoi de l'e-mail : {error}")
+        return False
 
 

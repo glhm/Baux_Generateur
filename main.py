@@ -10,6 +10,62 @@ from maths_baux import *
 from replace_requests import *
 from info_apis import *
 
+def envoyer_quittances(locataire, drive_service, gmail_service):
+    property_envoi_quittance_result = locataire['properties'].get('EnvoiQuittanceResult', {})
+    if property_envoi_quittance_result.get('select').get('name') == 'Reinit' :
+        envoi_quittance_result_id = property_envoi_quittance_result.get('id')
+        locataire_name = locataire['properties']['{NOM_LOCATAIRE}']['title'][0]['text']['content']
+        formatted_name = locataire_name.replace(" ", "_").replace("'", "_").replace(",", "")
+
+        print(f"Envoi quittance locataire {locataire_name}")
+        current_date = datetime.now()
+        current_year = current_date.strftime('%Y')
+        current_month_num = current_date.strftime('%m')  # Mois sous forme de numéro
+        mail_locataire = locataire['properties']['Mail']['rich_text'][0]['text']['content']
+        
+        # Construire le nom du fichier de quittance attendu
+        nom_fichier = f"Quittance_de_loyer_{current_year}_{current_month_num}_{formatted_name}"
+        
+        # Utiliser la fonction de recherche de fichier dans Google Drive
+        query = f"name='{nom_fichier}' and '{ID_REPO_QUITTANCES}' in parents"
+        results = drive_service.files().list(q=query, fields="files(id, name)").execute()
+        files = results.get('files', [])
+
+        if files:
+            file_id = files[0]['id']
+            file_stream = download_file_from_drive(file_id, drive_service)
+            print(f"Fichier {nom_fichier} trouvé")
+
+            # Envoyer l'email avec la pièce jointe téléchargée
+            return_mail = send_email_with_attachment(
+                to_address=mail_locataire,
+                subject=f'Quittance de loyer {current_month_num} {current_year} {locataire_name}',
+                body='Veuillez trouver ci-joint votre quittance de loyer.\n\nBien à vous,\nGuilhem Gerbault',
+                attachment_stream=file_stream,
+                attachment_name=nom_fichier,
+                gmail_service=gmail_service
+            )
+            if return_mail:
+                print("Update champ EnvoiQuittanceResult à Success")
+                update_notion_property(locataire['id'], envoi_quittance_result_id, QUITTANCE_RESULT_IDS["QuittanceSuccess"])
+            else:
+                print("Update champ EnvoiQuittanceResult à Failure")
+                update_notion_property(locataire['id'], envoi_quittance_result_id, QUITTANCE_RESULT_IDS["QuittanceFailure"])  
+        else:
+            error_message = f"Le fichier {nom_fichier} n'a pas été trouvé dans Google Drive."
+            print(error_message)
+
+            send_email_with_attachment(
+                to_address="gerbault.guilhem@gmail.com",
+                subject=f"[ERREUR] Quittance de loyer {current_month_num} {current_year} {locataire_name}",
+                body=f"Détails de l'erreur : {error_message}",
+                attachment_stream=None,  # Pas de pièce jointe
+                attachment_name='',  # Nom vide
+                gmail_service=gmail_service
+            )
+            print("Update champ EnvoiQuittanceResult à Failure")
+            update_notion_property(locataire['id'], envoi_quittance_result_id, QUITTANCE_RESULT_IDS["QuittanceFailure"])
+
 
 def process_locataire_pour_replace_requests(locataire, all_data) :
     locataire_dict,info_rollup = extract_fields_from_locataire_database(locataire)
@@ -189,56 +245,24 @@ def main(event=None, context=None):
                         )
 
         if envoyer_quittance:
-            print(f"Envoi quittance locataire {locataire_name}")
-            current_date = datetime.now()
-            current_year = current_date.strftime('%Y')
-            current_month_num = current_date.strftime('%m')  # Mois sous forme de numéro
-            mail_locataire = locataire['properties']['Mail']['rich_text'][0]['text']['content']
-            
-            # Construire le nom du fichier de quittance attendu
-            nom_fichier = f"Quittance_de_loyer_{current_year}_{current_month_num}_{formatted_name}"
-            
-            # Utiliser la fonction de recherche de fichier dans Google Drive
-            query = f"name='{nom_fichier}' and '{ID_REPO_QUITTANCES}' in parents"
-            results = drive_service.files().list(q=query, fields="files(id, name)").execute()
-            files = results.get('files', [])
- 
+            envoyer_quittances(locataire, drive_service, gmail_service)
 
-            if files:
-                file_id = files[0]['id']
-                file_stream = download_file_from_drive(file_id, drive_service)
-                print(f"Fichier {nom_fichier} trouvé")
+def main_lambda(event=None, context=None):
 
-                # Envoyer l'email avec la pièce jointe téléchargée
-                send_email_with_attachment(
-                    to_address=mail_locataire,
-                    subject=f'Quittance de loyer {current_month_num} {current_year} {locataire_name}',
-                    body='Veuillez trouver ci-joint votre quittance de loyer.\n\nBien à vous,\nGuilhem Gerbault',
-                    attachment_stream=file_stream,
-                    attachment_name=nom_fichier,
-                    gmail_service=gmail_service
-                )
-                print("Update champ EnvoiQuittanceResult à Success")
-                update_notion_property(locataire['id'], ENVOI_QUITTANCE_RESULT_id, QUITTANCE_RESULT_IDS["QuittanceSuccess"])
+    drive_service, docs_service, gmail_service = authenticate_and_create_services()
+    all_data = {}
+    retrieve_notion_datas(all_data)
+    for locataire in all_data['locataire']['results']:
+       # print(locataire)
+        envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
 
-            else:
-                error_message = f"Le fichier {nom_fichier} n'a pas été trouvé dans Google Drive."
-                print(error_message)
-                
-                send_email_with_attachment(
-                    to_address="gerbault.guilhem@gmail.com",
-                    subject=f"[ERREUR] Quittance de loyer {current_month_num} {current_year} {locataire_name}",
-                    body=f"Détails de l'erreur : {error_message}",
-                    attachment_stream=None,  # Pas de pièce jointe
-                    attachment_name='',  # Nom vide
-                    gmail_service=gmail_service
-                )
-                print("Update champ EnvoiQuittanceResult à Failure")
-                update_notion_property(locataire['id'], ENVOI_QUITTANCE_RESULT_id, QUITTANCE_RESULT_IDS["QuittanceFailure"])
+        if envoyer_quittance :
+            envoyer_quittances(locataire, drive_service, gmail_service)
+
 
 # Point d'entrée pour le script
 if __name__ == "__main__":
-    main()
+    main_lambda()
 
 def lambda_handler(event, context):
-    main(event, context)
+    main_lambda(event, context)

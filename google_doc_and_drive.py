@@ -107,6 +107,22 @@ def find_file_in_folder(folder_id, file_name, drive_service):
         return None
     return files[0]['id']
 
+def rechercher_fichier_quittance(nom_fichier, drive_service):
+    """Recherche le fichier de quittance dans Google Drive et retourne un booléen et le flux du fichier."""
+    query = f"name='{nom_fichier}' and '{ID_REPO_QUITTANCES}' in parents"
+    results = drive_service.files().list(q=query, fields="files(id, name)").execute()
+    files = results.get('files', [])
+
+    if files:
+        file_id = files[0]['id']
+        file_stream = download_file_from_drive(file_id, drive_service)
+        print(f"Fichier {nom_fichier} trouvé")
+        return True, file_stream
+    else:
+        print(f"Le fichier {nom_fichier} n'a pas été trouvé dans Google Drive.")
+        return False, None
+
+
 def download_file_from_drive(file_id, drive_service):
     """Télécharge un fichier depuis Google Drive et renvoie son contenu sous forme de flux en mémoire"""
     request = drive_service.files().get_media(fileId=file_id)
@@ -170,7 +186,7 @@ def process_document(template_id, new_document_name, replace_requests, folder_id
         export_doc_to_pdf_and_upload(document_id, drive_service, folder_id, new_document_name)
 
         # Supprimer le fichier du Drive après exportation
-        delete_file_by_id(document_id, drive_service)
+        #delete_file_by_id(document_id, drive_service)
 
     except Exception as e:
         print(f"[ERROR] Une erreur est survenue lors du traitement du document {new_document_name}: {e}")
