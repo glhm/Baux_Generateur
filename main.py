@@ -9,6 +9,8 @@ import os
 from maths_baux import *
 from replace_requests import *
 from info_apis import *
+import json
+
 
 def envoyer_quittances(locataire, drive_service, gmail_service):
     property_envoi_quittance_result = locataire['properties'].get('EnvoiQuittanceResult', {})
@@ -247,22 +249,75 @@ def main(event=None, context=None):
         if envoyer_quittance:
             envoyer_quittances(locataire, drive_service, gmail_service)
 
-def main_lambda(event=None, context=None):
-
+def lambda_handler(event, context):
+    # Authentifie et crée les services nécessaires
     drive_service, docs_service, gmail_service = authenticate_and_create_services()
     all_data = {}
+    
+    # Récupérer les données de Notion
     retrieve_notion_datas(all_data)
-    for locataire in all_data['locataire']['results']:
-       # print(locataire)
-        envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
 
-        if envoyer_quittance :
-            envoyer_quittances(locataire, drive_service, gmail_service)
+    # Extraire le body de l'événement
+    if event and 'body' in event:
+        body = json.loads(event['body'])
+        database_item_id = body.get('DataBaseItemID')
+
+        # Cherche le locataire par ID 
+        locataire = next((loc for loc in all_data['locataire']['results'] if loc['id'] == database_item_id), None)
+
+        if locataire:
+            envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
+
+            if envoyer_quittance:
+                # Appeler la fonction pour envoyer la quittance pour ce locataire
+                envoyer_quittances(locataire, drive_service, gmail_service)
+        else:
+            print(f"[ERROR] Locataire avec l'ID {database_item_id} non trouvé.")
+    else:
+        print("[ERROR] Aucune donnée dans le corps de l'événement.")
 
 
-# Point d'entrée pour le script
+# Fonction pour simuler l'appel de la fonction lambda_handler
+def test_lambda_handler():
+    # Exemple de données d'événement que tu pourrais recevoir
+    sample_event = {
+        "version": "2.0",
+        "routeKey": "POST /TriggerBaux",
+        "rawPath": "/TriggerBaux",
+        "rawQueryString": "",
+        "headers": {
+            "accept-encoding": "gzip, br, deflate",
+            "content-length": "82",
+            "content-type": "application/json",
+            "host": "7ysrbbxg08.execute-api.eu-west-3.amazonaws.com",
+            "user-agent": "Make/production",
+            "x-forwarded-for": "52.50.32.186",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https"
+        },
+        "requestContext": {
+            "accountId": "515966541334",
+            "apiId": "7ysrbbxg08",
+            "domainName": "7ysrbbxg08.execute-api.eu-west-3.amazonaws.com",
+            "http": {
+                "method": "POST",
+                "path": "/TriggerBaux",
+                "protocol": "HTTP/1.1",
+                "sourceIp": "52.50.32.186",
+                "userAgent": "Make/production"
+            },
+            "requestId": "fmdiRhklCGYEPrQ=",
+            "stage": "$default",
+            "time": "13/Oct/2024:18:21:27 +0000",
+            "timeEpoch": 1728843687839
+        },
+        "body": "{\"DataBaseItemID\": \"2c98e18b-dcb4-487c-8f5b-bc46bad9a462\",\"EnvoyerQuittance\":true}",
+        "isBase64Encoded": False
+    }
+    context = None  # Tu peux simuler un contexte si nécessaire
+    print("Testing lambda_handler with sample event:")
+    lambda_handler(sample_event, context)
+
+    # Point d'entrée pour le script
 if __name__ == "__main__":
-    main_lambda()
-
-def lambda_handler(event, context):
-    main_lambda(event, context)
+    test_lambda_handler()

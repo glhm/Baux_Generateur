@@ -16,5 +16,6 @@ DATABASE_IDS = {
 
 QUITTANCE_RESULT_IDS = {
      "QuittanceSuccess" : "124546fa-5451-4b30-b1ac-5122f7740d6e",
-     "QuittanceFailure" : "8958d57d-eac7-471d-b1bc-51e9f12e45c3"
+     "QuittanceFailure" : "8958d57d-eac7-471d-b1bc-51e9f12e45c3",
+     
 }
