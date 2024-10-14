@@ -3,7 +3,7 @@ Leases_Generator
 
 Générateur de Baux
 Un outil automatisé pour la génération de baux résidentiels basé sur les données de locataires, garants et propriétés. 
-Intégré avec Notion pour la gestion des données et Google Docs pour la génération de documents.
+Connecté à  Notion pour la gestion des donn et Google Docs pour la génération de documents.
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -31,8 +31,15 @@ DATABASE_IDS = {
      "chambres": "Id of ur Chambres database",
      "garants": "a3f2eaf45ee34d2bbf58922af689e941"
 }
-CLIENT_GOOGLE_SECRET_JSON_PATH = "path_to_google_api_secret_client.json"
 
+Configurer les variables d'environnement :
+CLIENT_GOOGLE_SECRET_JSON_PATH : "path_to_google_api_secret_client.json"
+MAIL_PERSO : mail sur lequel envoyer les erreurs pour etre notifie
+NOTION_API_SECRET
+
+
+--------------------------------------------------------------------------------------------------------------------
+Mettre à jour les dépendances 
 > Dans le repo "pip install -r requirements.txt
 > Assurez-vous d'avoir configuré vos bases de données Notion avec des colonnes nommées {COLONNE} et les données nécessaires. Dans le fichier le texte à remplacer doit être de la forme {{COLONNE}}
 
@@ -44,10 +51,6 @@ Execution Locale
 > python main.py
 Les baux générés seront exportés en format PDF et dans votre drive format google doc
 
-
---------------------------------------------------------------------------------------------------------------------
-copier les libs dans lambda_deploy 
-xcopy /E /I C:\Users\Guilhem\workspace\BauxGenerateur\venv\Lib\site-packages\* C:\Users\Guilhem\workspace\BauxGenerateur\lambda_deploy\
 
 
 pour copier les .py et zipper 

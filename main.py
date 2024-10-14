@@ -4,8 +4,6 @@ from google_doc_and_drive import *
 from datetime import datetime
 from googlemail import *
 from mystrings import *
-import locale
-import os
 from maths_baux import *
 from replace_requests import *
 from info_apis import *
@@ -56,9 +54,11 @@ def envoyer_quittances(locataire, drive_service, gmail_service):
         else:
             error_message = f"Le fichier {nom_fichier} n'a pas été trouvé dans Google Drive."
             print(error_message)
-
+            perso_address = os.getenv('MAIL_PERSO')
+            if perso_address is None:
+                raise ValueError("La variable d'environnement 'MAIL_PERSO' n'est pas définie.")
             send_email_with_attachment(
-                to_address="gerbault.guilhem@gmail.com",
+                to_address=perso_address,
                 subject=f"[ERREUR] Quittance de loyer {current_month_num} {current_year} {locataire_name}",
                 body=f"Détails de l'erreur : {error_message}",
                 attachment_stream=None,  # Pas de pièce jointe
