@@ -14,6 +14,6 @@ my_secrets/
 
 token.pickle
 
- venv/
+venv/
 
- *.zip
+*.zip

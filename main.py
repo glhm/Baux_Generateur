@@ -249,32 +249,51 @@ def main(event=None, context=None):
         if envoyer_quittance:
             envoyer_quittances(locataire, drive_service, gmail_service)
 
+
 def lambda_handler(event, context):
     # Authentifie et crée les services nécessaires
     drive_service, docs_service, gmail_service = authenticate_and_create_services()
     all_data = {}
-    
+
     # Récupérer les données de Notion
     retrieve_notion_datas(all_data)
 
-    # Extraire le body de l'événement
-    if event and 'body' in event:
-        body = json.loads(event['body'])
-        database_item_id = body.get('DataBaseItemID')
-
-        # Cherche le locataire par ID 
-        locataire = next((loc for loc in all_data['locataire']['results'] if loc['id'] == database_item_id), None)
-
-        if locataire:
-            envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
-
-            if envoyer_quittance:
-                # Appeler la fonction pour envoyer la quittance pour ce locataire
-                envoyer_quittances(locataire, drive_service, gmail_service)
-        else:
-            print(f"[ERROR] Locataire avec l'ID {database_item_id} non trouvé.")
-    else:
+    # Vérifier si l'événement contient un corps
+    if not event or 'body' not in event:
         print("[ERROR] Aucune donnée dans le corps de l'événement.")
+        return
+    
+    # Essayer de décoder le JSON
+    try:
+        body = json.loads(event['body'])
+    except json.JSONDecodeError as e:
+        print(f"[ERROR] Erreur lors du décodage du JSON: {e}")
+
+        return    
+    
+    database_item_id = body.get('DataBaseItemID')
+    # Si l'ID de la base de données est manquant
+    if not database_item_id:
+        print("[ERROR] DataBaseItemID non fourni dans le corps de l'événement.")
+        return
+
+    # Cherche le locataire par ID
+    locataire = next((loc for loc in all_data['locataire']['results'] if loc['id'] == database_item_id), None)
+
+    # Si le locataire n'existe pas
+    if not locataire:
+        print(f"[ERROR] Locataire avec l'ID {database_item_id} non trouvé.")
+        return
+    
+    # Vérifier si on doit envoyer la quittance
+    envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
+    
+    if not envoyer_quittance:
+        print(f"[INFO] EnvoyerQuittance n'est pas activé pour le locataire avec l'ID {database_item_id}.")
+        return
+
+    # Envoyer la quittance pour ce locataire
+    envoyer_quittances(locataire, drive_service, gmail_service)
 
 
 # Fonction pour simuler l'appel de la fonction lambda_handler
