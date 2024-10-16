@@ -15,7 +15,7 @@ Lease_Generator is a tool designed to automate the creation of residential lease
 
 == Uses Cases  
 
-=== Use Case 1 : User checks "Send Receipt" field in Notion to send an email to the adequate tenant" 
+=== Use Case 1 : User checks "Send Receipt" field in Notion to send an email to the adequate tenant
 ==== Features 
 - on "Send Receipt" field checked in Notion Tenant database, send an email to the tenant with a receipt of the montly payment based on the information of the tenant
 image::images/tenant_reinitialized_to_check.png[Tenant DB reinitialized]
@@ -25,6 +25,7 @@ image::images/mail.png[Mail with attached receipt]
 
 - the Notion database field "Sending Result" is then updated with the result of the process
 image::images/result_after_processing.png[Result after processing]
+image::images/Testjpg.jpg[Result after processing]
 
 ==== System Design 
 image::images/use_case_1-drawio.svg[System Design overview]
