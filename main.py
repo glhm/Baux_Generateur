@@ -145,7 +145,6 @@ def main(event=None, context=None):
         activer_generation_quittance = locataire['properties'].get('ActiverGenerationQuittances', {}).get('checkbox', False)
         envoyer_quittance = locataire['properties'].get('EnvoyerQuittance', {}).get('checkbox', False)
         # Pour update à l'envoi des quittances 
-        ENVOI_QUITTANCE_RESULT_id = locataire['properties'].get('EnvoiQuittanceResult', {}).get('id')
         locataire_name = locataire['properties']['{NOM_LOCATAIRE}']['title'][0]['text']['content']
         formatted_name = locataire_name.replace(" ", "_").replace("'", "_").replace(",", "")
 
