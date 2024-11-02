@@ -1,9 +1,9 @@
 # replace_strings_in_doc.py
 
-from notion_database import *
-from mystrings import *
+from src.domain.housing_strings import *
+from src.adapters.notion_adapter import *
 
-def prepare_replace_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, chambre_dict_str, prorata_data, type_caution, mention_speciale_loyer, date_contrat, type_bail):
+def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, chambre_dict_str, prorata_data, type_caution, mention_speciale_loyer, date_contrat, type_bail):
     """
     Prépare les demandes de remplacement pour le modèle de document avec les informations fournies.
 
@@ -33,10 +33,10 @@ def prepare_replace_requests(locataire_dict_str, guarant_dict_str, bien_dict_str
         all_replace_requests.extend(add_one_request("{{DOC_VISA}}", ""))
 
     # Ajout des informations provenant des dictionnaires
-    all_replace_requests.extend(build_replace_requests(locataire_dict_str))
-    all_replace_requests.extend(build_replace_requests(guarant_dict_str))
-    all_replace_requests.extend(build_replace_requests(bien_dict_str))
-    all_replace_requests.extend(build_replace_requests(chambre_dict_str))
+    all_replace_requests.extend(build_replace_requests_from_dict(locataire_dict_str))
+    all_replace_requests.extend(build_replace_requests_from_dict(guarant_dict_str))
+    all_replace_requests.extend(build_replace_requests_from_dict(bien_dict_str))
+    all_replace_requests.extend(build_replace_requests_from_dict(chambre_dict_str))
 
     # Ajout des informations calculées
     all_replace_requests.extend(add_one_request("{{TOTAL_1ER_MOIS}}", "{:.2f}".format(prorata_data["total_premier_mois"])))
@@ -73,18 +73,7 @@ def prepare_replace_requests(locataire_dict_str, guarant_dict_str, bien_dict_str
     return all_replace_requests
 
 
-def prepare_quittance_requests(prorata_data, mois_courant, somme_due, jour_debut_quittance, titre_detail_reglement, paragraphe_detail_reglement):
-    """
-    Prépare les demandes de remplacement pour les quittances.
-
-    :param prorata_data: Dictionnaire avec les données proratisées calculées.
-    :param mois_courant: Mois courant pour la quittance.
-    :param somme_due: Montant total dû pour la quittance.
-    :param jour_debut_quittance: Jour de début de la quittance.
-    :param titre_detail_reglement: Titre du détail du règlement.
-    :param paragraphe_detail_reglement: Paragraphe de détail du règlement.
-    :return: Liste des demandes de remplacement.
-    """
+def build_receipts_requests(somme_due, jour_debut_quittance, titre_detail_reglement, paragraphe_detail_reglement):
     quittance_requests = []
 
     # Ajout des informations spécifiques à la quittance

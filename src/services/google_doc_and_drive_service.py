@@ -145,7 +145,7 @@ def delete_file_by_id(file_id, drive_service):
     except Exception as e:
         print(f"[ERROR] Une erreur est survenue lors de la suppression du fichier avec l'ID {file_id}: {e}")
 
-def process_document(template_id, new_document_name, replace_requests, folder_id, drive_service, docs_service):
+def create_and_export_doc_from_template(template_id, new_document_name, replace_requests, folder_id, drive_service, docs_service):
     """
     Copie un modèle Google Docs, remplace les champs, exporte en PDF et supprime le fichier du Drive.
 

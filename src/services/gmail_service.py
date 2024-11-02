@@ -1,16 +1,7 @@
-from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
 import base64
-import mimetypes
-
-import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
-from googleapiclient.http import MediaIoBaseUpload
-from googleapiclient.discovery import build
-from google.auth.transport.requests import Request
-from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.errors import HttpError  
 
 def send_email_with_attachment(to_address, subject, body, attachment_stream, attachment_name, gmail_service):
