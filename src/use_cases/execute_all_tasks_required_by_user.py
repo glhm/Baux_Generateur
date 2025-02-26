@@ -55,18 +55,26 @@ def build_requests_from_tenant_info(locataire, all_data) :
                 chambre_dict = extract_fields_from_database(chambre)
                 #print(chambre_dict)
 
+    loyer_id = info_rollup.get('loyer_id')
+    if loyer_id:
+        for loyer in all_data['loyer']['results']:
+            if loyer['id'] == loyer_id:
+                loyer_dict = extract_fields_from_database(loyer)
+                #print(chambre_dict)
+
     # tout convertir en string
     locataire_dict_str = {key: str(value) for key, value in locataire_dict.items()}
     garant_dict_str = {key: str(value) for key, value in garant_dict.items()}
     bien_dict_str = {key: str(value) for key, value in bien_dict.items()}
     chambre_dict_str  = {key: str(value) for key, value in chambre_dict.items()}
+    loyer_dict_str  = {key: str(value) for key, value in loyer_dict.items()}
 
 
     # Calcul des montants proratisés
     mois_arrivee = locataire['properties']['{MOIS_ARRIVEE}']['rich_text'][0]['text']['content']
     jour_arrivee = locataire['properties']['{JOUR_ARRIVEE}']['number']
 
-    prorata_data = compute_housing_values(chambre_dict, jour_arrivee, mois_arrivee)
+    prorata_data = compute_housing_values(loyer_dict_str, jour_arrivee, mois_arrivee)
 
 
     # Préparer les demandes de remplacement
@@ -82,6 +90,7 @@ def build_requests_from_tenant_info(locataire, all_data) :
         garant_dict_str,
         bien_dict_str,
         chambre_dict_str,
+        loyer_dict_str,
         prorata_data,
         type_caution,
         mention_speciale_loyer,

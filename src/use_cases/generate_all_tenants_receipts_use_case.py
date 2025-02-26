@@ -12,6 +12,7 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
     # Obtenez le mois d'arrivée et le jour d'arrivée du locataire
     mois_arrivee = locataire['properties']['{MOIS_ARRIVEE}']['rich_text'][0]['text']['content']
     jour_arrivee = locataire['properties']['{JOUR_ARRIVEE}']['number']
+    annee_arrivee = locataire['properties']['{ANNEE_ARRIVEE}']['number'] 
     mois_index_arrivee = mois_list.index(mois_arrivee) + 1  # Index du mois d'arrivée dans la liste
 
     for annee in annee_selectionnees:
@@ -22,13 +23,13 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
             mois_index = mois_list.index(mois) + 1  # Index du mois en cours
             
             # Vérifiez si le mois actuel est égal ou postérieur au mois d'arrivée
-            if mois_index >= mois_index_arrivee:
+            if int(annee_courante) > annee_arrivee or mois_index >= mois_index_arrivee:
                 all_replace_requests_month = add_one_request("{{MOIS_COURANT}}", mois) + add_one_request("{{DERNIER_JOUR}}", str(dernier_jour))
                 mois_numero_str = f"{mois_index:02}"
                 new_quittance_doc_name = f"Quittance_de_loyer_{annee_courante}_{mois_numero_str}_{formatted_name}"
 
                 # Pour le premier mois d'arrivée, on génère la quittance avec prorata
-                if mois == mois_arrivee:
+                if mois == mois_arrivee :
                     print("Génération de la quittance pour le 1er mois de loyer (prorata)")
                     quittance_requests = build_receipts_requests(
                         prorata_data["prorata_total_CC"],

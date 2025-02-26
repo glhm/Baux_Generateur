@@ -1,6 +1,6 @@
 from src.utils.months import *
 
-def compute_housing_values(chambre_dict, jour_arrivee, mois_arrivee):
+def compute_housing_values(loyer_dict, jour_arrivee, mois_arrivee):
     """
     Calcule les montants proratisés pour le premier mois de loyer et charges.
     
@@ -9,8 +9,8 @@ def compute_housing_values(chambre_dict, jour_arrivee, mois_arrivee):
     :param mois_arrivee: Mois d'arrivée du locataire.
     :return: Dictionnaire avec les montants proratisés calculés.
     """
-    loyer = chambre_dict['{MONTANT_LOYER}']
-    charges = chambre_dict['{MONTANT_CHARGES}']
+    loyer = float(loyer_dict['{MONTANT_LOYER}'])
+    charges = float(loyer_dict['{MONTANT_CHARGES}'])
     loyer_CC = loyer + charges
     
     dernier_jour = map_jour[mois_arrivee]

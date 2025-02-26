@@ -3,7 +3,7 @@
 from src.domain.housing_strings import *
 from src.adapters.notion_adapter import *
 
-def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, chambre_dict_str, prorata_data, type_caution, mention_speciale_loyer, date_contrat, type_bail):
+def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, chambre_dict_str,loyer_dict_str, prorata_data, type_caution, mention_speciale_loyer, date_contrat, type_bail):
     """
     Prépare les demandes de remplacement pour le modèle de document avec les informations fournies.
 
@@ -11,6 +11,7 @@ def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, ch
     :param guarant_dict_str: Dictionnaire avec les informations du garant sous forme de chaîne.
     :param bien_dict_str: Dictionnaire avec les informations du bien sous forme de chaîne.
     :param chambre_dict_str: Dictionnaire avec les informations de la chambre sous forme de chaîne.
+    :param loyer_dict_str: Dictionnaire avec les informations des montants des loyers
     :param prorata_data: Dictionnaire avec les données proratisées calculées.
     :param type_caution: Type de caution.
     :param mention_speciale_loyer: Mention spéciale du loyer.
@@ -37,6 +38,7 @@ def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, ch
     all_replace_requests.extend(build_replace_requests_from_dict(guarant_dict_str))
     all_replace_requests.extend(build_replace_requests_from_dict(bien_dict_str))
     all_replace_requests.extend(build_replace_requests_from_dict(chambre_dict_str))
+    all_replace_requests.extend(build_replace_requests_from_dict(loyer_dict_str))
 
     # Ajout des informations calculées
     all_replace_requests.extend(add_one_request("{{TOTAL_1ER_MOIS}}", "{:.2f}".format(prorata_data["total_premier_mois"])))

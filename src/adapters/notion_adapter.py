@@ -37,6 +37,9 @@ def extract_fields_from_locataire_database(locataire_database):
     if '🛏️ Chambres' in locataire_database['properties'] and locataire_database['properties']['🛏️ Chambres']['relation']:
         chambre_id = locataire_database['properties']['🛏️ Chambres']['relation'][0]['id']
         info_rollup['chambre_id'] = chambre_id
+    if '💲 Loyers' in locataire_database['properties'] and locataire_database['properties']['💲 Loyers']['relation']:
+        loyer_id = locataire_database['properties']['💲 Loyers']['relation'][0]['id']
+        info_rollup['loyer_id'] = loyer_id
 
     return tenant_values_dict, info_rollup
 
