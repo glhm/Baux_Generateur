@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from src.services.google_doc_and_drive_service import *
 from src.conf.info_apis import *
-
+import subprocess 
 from subprocess import run, Popen
 import time
 
@@ -80,11 +80,13 @@ def process_at_depenses_folder(drive_service, tr_folder_id):
                     '--ahk-param2', 'value2'
                 ]
                 
-                try:
-                    #run(command, check=True)
-                    print(f"✅ Successfully processed {filename}\n")
-                except Exception as e:
-                    print(f"❌ Error processing {filename}: {str(e)}\n")
+                run_puppeteer_script(
+                receipt_data['renter_name'],
+                receipt_data['amount1'],
+                receipt_data['amount2'],
+                receipt_data['amount3'],
+                receipt_data['date']
+                )
             else:
                 print(f"⚠️ Skipping file {filename} - doesn't match expected format")
                 print("👉 Expected format: Quittance--MMYYYY--NomDuLocataire--Montant1--Montant2--Montant3.pdf")
@@ -112,13 +114,23 @@ def load_receipt_on_website():
     except Exception as e:
         print(f"Error: {str(e)}")
 
-def find_folder_by_name(drive_service, folder_name):
-    """Find folder ID by name."""
-    results = drive_service.files().list(
-        q=f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'",
-        fields="files(id)"
-    ).execute()
-    
-    files = results.get('files', [])
-    return files[0]['id'] if files else None
 
+import subprocess
+
+def run_puppeteer_script(renter_name, amount1, amount2, amount3, date):
+    """Run Puppeteer script with extracted parameters."""
+    try:
+        puppeteer_script = r"src\js\dossier.js"  # Use raw string for the file path
+        command = [
+            'node',
+            puppeteer_script,
+            renter_name,
+            str(amount1),
+            str(amount2),
+            str(amount3),
+            date
+        ]
+        subprocess.run(command, check=True)
+        print(f"✅ Puppeteer script executed successfully for {renter_name}")
+    except Exception as e:
+        print(f"❌ Error running Puppeteer script: {str(e)}")
