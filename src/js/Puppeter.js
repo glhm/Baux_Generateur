@@ -197,10 +197,6 @@ console.log(`📄 Processing receipt for: ${renterName}, Amounts: ${MontantTotal
   }
   {
     const targetPage = page;
-    await targetPage.keyboard.up('m');
-  }
-  {
-    const targetPage = page;
     await puppeteer.Locator.race([
       targetPage.locator('#gDate input'),
       targetPage.locator('::-p-xpath(//*[@id=\\"gDate\\"]/div[2]/div/div/div[1]/div/input)'),
@@ -243,6 +239,31 @@ console.log(`📄 Processing receipt for: ${renterName}, Amounts: ${MontantTotal
         },
       });
   }
+  /////////////////// script akh appel
+  const { exec } = require('child_process');
+  const path = require('path');
+
+  // Définir le chemin de AutoHotkey.exe (si pas dans les variables d'environnement)
+  const ahkExecutable = `"C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey.exe"`;
+
+  // Définir le chemin du script AHK
+  const ahkScriptPath = path.join(__dirname, '..', 'ahk_scripts', 'import_file.ahk');
+
+  console.log(`📂 Exécution du script AHK : ${ahkScriptPath}`);
+
+  exec(`${ahkExecutable} "${ahkScriptPath}"`, (error, stdout, stderr) => {
+    if (error) {
+      console.error(`❌ Erreur lors de l'exécution du script AHK: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`⚠️ Avertissement: ${stderr}`);
+      return;
+    }
+    console.log(`✅ Script AHK exécuté avec succès: ${stdout}`);
+  });
+
+
   {
     const targetPage = page;
     await puppeteer.Locator.race([
@@ -252,7 +273,7 @@ console.log(`📄 Processing receipt for: ${renterName}, Amounts: ${MontantTotal
       targetPage.locator(':scope >>> #g303a74098e356909ffcf68b9bd4ca1b0'),
       targetPage.locator('::-p-text(ConfirmerLoading...)')
     ])
-      .setTimeout(timeout)
+      .setTimeout(12000)
       .click({
         offset: {
           x: 20.2874755859375,
@@ -276,6 +297,25 @@ console.log(`📄 Processing receipt for: ${renterName}, Amounts: ${MontantTotal
         },
       });
   }
+
+  {
+    const targetPage = page;
+    await puppeteer.Locator.race([
+      targetPage.locator('#g0aea5a3b4fbea02dad40ffdfe0e622b3 > span'),
+      targetPage.locator('::-p-xpath(//*[@id=\\"g0aea5a3b4fbea02dad40ffdfe0e622b3\\"]/span)'),
+      targetPage.locator(':scope >>> #g0aea5a3b4fbea02dad40ffdfe0e622b3 > span'),
+      targetPage.locator('::-p-text(Enregistrer)')
+    ])
+      .setTimeout(timeout)
+      .click({
+        offset: {
+          x: 18.962493896484375,
+          y: 6.39996337890625,
+        },
+      });
+  }
+  //gerer le cas d'erreur exemple annee enterieure
+  // on recommence 
   {
     const targetPage = page;
     await puppeteer.Locator.race([
@@ -293,7 +333,7 @@ console.log(`📄 Processing receipt for: ${renterName}, Amounts: ${MontantTotal
       });
   }
 
-  await browser.close();
+  //  await browser.close();
 
 })().catch(err => {
   console.error(err);

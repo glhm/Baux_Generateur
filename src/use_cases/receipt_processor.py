@@ -120,7 +120,7 @@ import subprocess
 def run_puppeteer_script(renter_name, amount1, amount2, amount3, date):
     """Run Puppeteer script with extracted parameters."""
     try:
-        puppeteer_script = r"src\js\dossier.js"  # Use raw string for the file path
+        puppeteer_script = r"src\js\Puppeter.js"  # Use raw string for the file path
         command = [
             'node',
             puppeteer_script,
