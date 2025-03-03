@@ -7,7 +7,7 @@ from src.use_cases.send_one_receipt_use_case import *
 
 def send_receipt_to_tenant(event, context):
     # Authentifie et crée les services nécessaires
-    drive_service, docs_service, gmail_service = authenticate_and_create_services()
+    drive_service, _, gmail_service = authenticate_and_create_services()
     all_data = {}
 
     # Récupérer les données de Notion

@@ -39,3 +39,5 @@ Prorata au nombre de jour : \n \
 - Part Charges = {{PRORATA_CHARGES}} euros"
 
 titre_detail_du_reglement_quittance = "DETAIL DU REGLEMENT"
+
+jour_creation_quittance="08"
