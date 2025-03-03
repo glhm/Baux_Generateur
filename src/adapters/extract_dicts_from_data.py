@@ -43,46 +43,9 @@ def extract_fields_from_locataire_database(locataire_database):
 
     return tenant_values_dict, info_rollup
 
-def build_replace_requests_from_dict(data_dict):
-    requests = []
-    for field, value in data_dict.items():
-        requests.append({
-            'replaceAllText': {
-                'containsText': {
-                    'text': f"{{{field}}}",
-                    'matchCase': True,
-                },
-                'replaceText': value,
-            }
-        })
-    return requests
-
-def add_one_request(field,value):
-    requests = []
-    requests.append({
-        'replaceAllText': {
-            'containsText': {
-                'text': f"{field}",
-                'matchCase': True,
-            },
-            'replaceText': value,
-        }
-    })
-    return requests
-
-
 def extract_fields_from_database(notion_database_data):
     """
     Extrait les valeurs des champs d'une base de données Notion spécifique.
     """
     return extract_fields(notion_database_data['properties'])
-
-def build_formatted_name(locataire):
-    formatted_name = locataire['properties']['{NOM_LOCATAIRE}']['title'][0]['text']['content'].replace(" ", "_").replace("'", "_").replace(",", "")
-    return formatted_name
-
-def calculate_prorata(locataire, chambre_dict):
-    mois_arrivee = locataire['properties']['{MOIS_ARRIVEE}']['rich_text'][0]['text']['content']
-    jour_arrivee = locataire['properties']['{JOUR_ARRIVEE}']['number']
-    return compute_housing_values(chambre_dict, jour_arrivee, mois_arrivee)
 

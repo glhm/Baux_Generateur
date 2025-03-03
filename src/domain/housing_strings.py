@@ -31,12 +31,19 @@ signature_des_garants = "Signature du garant"
 
 doc_visale = "F - Le Visa Visale du locataire" 
 
-paragraphe_detail_du_reglement_quittance = "Avec arrivée le {{JOUR_ARRIVEE}} du mois : \n \
-Prorata au nombre de jour : \n \
- ({{NOMBRE_JOURS_PREMIER_MOIS}} / {{DERNIER_JOUR}} * {{MONTANT_TOTAL}}), soit {{PRORATA_TOTAL_CC}} euros par mois \n \
+paragraphe_detail_du_reglement_quittance_premier_mois = "Avec arrivée le {{JOUR_ARRIVEE}} du mois : \n \
+Prorata au nombre de jours : \n \
+ ({{NOMBRE_JOURS_PREMIER_MOIS}} / {{NOMBRE_JOUR_MOIS}} * {{MONTANT_TOTAL}}), soit {{PRORATA_TOTAL_CC}} euros par mois \n \
 \n \
 - Part Loyer  = {{PRORATA_LOYER}} euros \n \
 - Part Charges = {{PRORATA_CHARGES}} euros"
+
+paragraphe_detail_du_reglement_quittance_dernier_mois = "Avec départ le {{JOUR_DEPART}} du mois : \n \
+Prorata au nombre de jours : \n \
+ ({{JOUR_DEPART}} / {{NOMBRE_JOUR_MOIS}} * {{MONTANT_TOTAL}}), soit {{PRORATA_TOTAL_CC_DEPART}} euros par mois \n \
+\n \
+- Part Loyer  = {{PRORATA_LOYER_DEPART}} euros \n \
+- Part Charges = {{PRORATA_CHARGES_DEPART}} euros"
 
 titre_detail_du_reglement_quittance = "DETAIL DU REGLEMENT"
 

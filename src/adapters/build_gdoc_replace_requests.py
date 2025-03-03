@@ -1,7 +1,7 @@
 # replace_strings_in_doc.py
 
 from src.domain.housing_strings import *
-from src.adapters.notion_adapter import *
+from src.adapters.extract_dicts_from_data import *
 
 def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, chambre_dict_str,loyer_dict_str, prorata_data, type_caution, mention_speciale_loyer, date_contrat, type_bail):
     """
@@ -41,17 +41,20 @@ def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, ch
     all_replace_requests.extend(build_replace_requests_from_dict(loyer_dict_str))
 
     # Ajout des informations calculées
-    all_replace_requests.extend(add_one_request("{{TOTAL_1ER_MOIS}}", "{:.2f}".format(prorata_data["total_premier_mois"])))
-    all_replace_requests.extend(add_one_request("{{PRORATA_TOTAL_CC}}", "{:.2f}".format(prorata_data["prorata_total_CC"])))
-    all_replace_requests.extend(add_one_request("{{PRORATA_LOYER}}", "{:.2f}".format(prorata_data["prorata_loyer"])))
-    all_replace_requests.extend(add_one_request("{{PRORATA_CHARGES}}", "{:.2f}".format(prorata_data["prorata_charges"])))
+    all_replace_requests.extend(add_one_request("{{TOTAL_1ER_MOIS}}", str(prorata_data["total_premier_mois"])))
+    all_replace_requests.extend(add_one_request("{{PRORATA_TOTAL_CC}}", str(prorata_data["prorata_total_CC"])))
+    all_replace_requests.extend(add_one_request("{{PRORATA_LOYER}}", str(prorata_data["prorata_loyer"])))
+    all_replace_requests.extend(add_one_request("{{PRORATA_CHARGES}}", str(prorata_data["prorata_charges"])))
     all_replace_requests.extend(add_one_request("{{MONTANT_LOYER}}", str(prorata_data["loyer"])))
     all_replace_requests.extend(add_one_request("{{MONTANT_CHARGES}}", str(prorata_data["charges"])))
     all_replace_requests.extend(add_one_request("{{MONTANT_GARANTIES}}", str(prorata_data["montant_garanties"])))
     all_replace_requests.extend(add_one_request("{{MONTANT_TOTAL}}", str(prorata_data["loyer_CC"])))
-    all_replace_requests.extend(add_one_request("{{DERNIER_JOUR}}", str(prorata_data["dernier_jour"])))
+    
     all_replace_requests.extend(add_one_request("{{NOMBRE_JOURS_PREMIER_MOIS}}", str(prorata_data["nombre_de_jours_premier_mois"])))
     
+    all_replace_requests.extend(add_one_request("{{PRORATA_TOTAL_CC_DEPART}}", str(prorata_data["prorata_total_CC_depart"])))
+    all_replace_requests.extend(add_one_request("{{PRORATA_LOYER_DEPART}}", str(prorata_data["prorata_loyer_depart"])))
+    all_replace_requests.extend(add_one_request("{{PRORATA_CHARGES_DEPART}}", str(prorata_data["prorata_charges_depart"])))
     if mention_speciale_loyer:
         all_replace_requests.extend(add_one_request("{{MENTION_SPECIALE_LOYER}}", mention_speciale_loyer))
     else:
@@ -75,14 +78,19 @@ def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, ch
     return all_replace_requests
 
 
-def build_receipts_requests(somme_due, jour_debut_quittance, titre_detail_reglement, paragraphe_detail_reglement):
+def build_receipts_requests(somme_due, jour_debut_quittance, titre_detail_reglement, paragraphe_detail_reglement,annee_courante,mois_courant,nombre_jour_mois,jour_depart):
     quittance_requests = []
 
     # Ajout des informations spécifiques à la quittance
-    quittance_requests.extend(add_one_request("{{SOMME_DUE}}", "{:.2f}".format(somme_due)))
+    quittance_requests.extend(add_one_request("{{SOMME_DUE}}", str(somme_due)))
     quittance_requests.extend(add_one_request("{{JOUR_DEBUT_QUITTANCE}}", str(jour_debut_quittance)))
     quittance_requests.extend(add_one_request("{{TITRE_DETAIL_DU_REGLEMENT}}", titre_detail_reglement))
     quittance_requests.extend(add_one_request("{{PARAGRAPHE_DETAIL_REGLEMENT_QUITTANCES}}", paragraphe_detail_reglement))
+    quittance_requests.extend(add_one_request("{{ANNEE_COURANTE}}", str(annee_courante)))
+    quittance_requests.extend(add_one_request("{{MOIS_COURANT}}", mois_courant))
+    quittance_requests.extend(add_one_request("{{NOMBRE_JOUR_MOIS}}", str(nombre_jour_mois)))
+    quittance_requests.extend(add_one_request("{{JOUR_DEPART}}", str(jour_depart)))
+
 
     return quittance_requests
 
@@ -129,9 +137,12 @@ def build_requests_from_tenant_info(locataire, all_data) :
 
     # Calcul des montants proratisés
     mois_arrivee = locataire['properties']['{MOIS_ARRIVEE}']['rich_text'][0]['text']['content']
-    jour_arrivee = locataire['properties']['{JOUR_ARRIVEE}']['number']
+    jour_arrivee = locataire['properties']['{JOUR_ARRIVEE}']['number'] #TODO passer en chiffre 
 
-    prorata_data = compute_housing_values(loyer_dict_str, jour_arrivee, mois_arrivee)
+    mois_depart = locataire['properties']['{MOIS_DEPART}']['number']
+    jour_depart = locataire['properties']['{JOUR_DEPART}']['number']
+
+    prorata_data = compute_housing_values(loyer_dict_str, jour_arrivee, mois_arrivee,jour_depart,mois_depart)
 
 
     # Préparer les demandes de remplacement
@@ -156,6 +167,34 @@ def build_requests_from_tenant_info(locataire, all_data) :
     )
 
     return all_replace_requests, type_caution, prorata_data
+
+def build_replace_requests_from_dict(data_dict):
+    requests = []
+    for field, value in data_dict.items():
+        requests.append({
+            'replaceAllText': {
+                'containsText': {
+                    'text': f"{{{field}}}",
+                    'matchCase': True,
+                },
+                'replaceText': value,
+            }
+        })
+    return requests
+
+def add_one_request(field,value):
+    requests = []
+    requests.append({
+        'replaceAllText': {
+            'containsText': {
+                'text': f"{field}",
+                'matchCase': True,
+            },
+            'replaceText': value,
+        }
+    })
+    return requests
+
 
 
 

@@ -3,11 +3,9 @@ from src.conf.info_apis import *
 from src.services.google_doc_and_drive_service import *
 from src.services.gmail_service import *
 from src.services.notion_service import *
-from src.utils.receipt_naming import *
+from src.utils.naming import *
 import os
-import re  # 📌 Importer re pour les expressions régulières
 
-# 📌 Fonction centralisée pour l'envoi de mails d'erreur
 def send_error_email(subject, body, gmail_service):
     perso_address = os.getenv('MAIL_PERSO')
     if not perso_address:
@@ -40,10 +38,26 @@ def send_receipt_from_drive(locataire, drive_service, gmail_service, formatted_n
     # 📌 Motif regex pour xx entre 00 et 30
     pattern = get_quittance_pattern(current_month_num,current_year,formatted_name)
 
-    # 🔄 Recherche de fichiers qui commencent par "Quittance--"
-    query = f"name contains 'Quittance--' and '{ID_REPO_QUITTANCES}' in parents"
+
+    current_year_folder = get_or_create_year_folder(drive_service, ID_REPO_LOCATIF, current_year)
+    recettes_folder = get_or_create_subfolder(drive_service, current_year_folder, "Recettes")
+    at_folder = get_or_create_subfolder(drive_service, recettes_folder, f"AT")
+
+    if not at_folder:
+        error_message = f"🚫 Erreur : Impossible de trouver ou créer le dossier AT pour l'année {current_year}."
+        print(error_message)
+        send_error_email(
+            subject=f"[ERREUR] Dossier AT manquant pour {locataire_name}",
+            body=f"Détails de l'erreur : {error_message}",
+            gmail_service=gmail_service
+        )
+        update_notion_property(locataire['id'], envoi_quittance_result_id, QUITTANCE_RESULT_IDS["QuittanceFailure"])
+        return
+
+    query = f"name contains 'Quittance--' and '{at_folder}' in parents"
     results = drive_service.files().list(q=query, fields="files(id, name)").execute()
     files = results.get('files', [])
+
 
     # 📌 Filtrer les fichiers selon le modèle flexible et précis
     matching_files = [f for f in files if pattern.match(f['name'])]

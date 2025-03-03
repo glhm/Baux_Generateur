@@ -5,7 +5,7 @@ from src.use_cases.generate_lease_use_case import *
 from src.use_cases.send_one_receipt_use_case import *
 from src.use_cases.generate_all_tenants_receipts_use_case import *
 
-from src.adapters.notion_adapter import *
+from adapters.extract_dicts_from_data import *
 
 def do_tasks_required_from_user():
     drive_service, _, gmail_service = authenticate_and_create_services()
