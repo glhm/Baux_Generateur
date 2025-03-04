@@ -5,9 +5,9 @@ from src.use_cases.generate_lease_use_case import *
 from src.use_cases.send_one_receipt_use_case import *
 from src.use_cases.generate_all_tenants_receipts_use_case import *
 
-from adapters.extract_dicts_from_data import *
+from src.adapters.extract_dicts_from_data import *
 
-def do_tasks_required_from_user():
+def check_for_receipt_to_send():
     drive_service, _, gmail_service = authenticate_and_create_services()
     
     all_data = {}
@@ -17,6 +17,8 @@ def do_tasks_required_from_user():
         # Vérification des cases cochées dans Notion
         formatted_name = build_formatted_name(locataire) 
 
-    if is_quittance_sending_enabled(locataire):
-            send_receipt_from_drive(locataire, drive_service, gmail_service,formatted_name)
+        if is_quittance_sending_enabled(locataire):
+                send_receipt_from_drive(locataire, drive_service, gmail_service,formatted_name)
+
+
 
