@@ -9,7 +9,7 @@ from src.utils.date_utils import *
 from src.adapters.extract_dicts_from_data import *
 from src.adapters.build_gdoc_replace_requests import *
 
-def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all_replace_requests, prorata_data, formatted_name):
+def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all_replace_requests, prorata_data, formatted_name,prorata_departure):
     print(f"[INFO] Traitement des quittances pour le locataire : {formatted_name}")
 
     annee_selectionnees = locataire['properties']['ANNEES']['multi_select']
@@ -24,7 +24,7 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
     mois_depart = locataire['properties'].get('{MOIS_DEPART}', {}).get('number')
     annee_depart = locataire['properties'].get('{ANNEE_DEPART}', {}).get('number')
 
-    has_departure_date =jour_depart is not None and mois_depart is not None and annee_depart is not None
+    has_departure_date =prorata_departure is not None
 
     if has_departure_date:
         print(f"Dernier mois completé")
@@ -62,12 +62,14 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
                 continue  # On passe au mois suivant sans générer de quittance
             
             if has_departure_date and int(annee_courante) == annee_depart and mois_index == mois_depart:
-                somme_due = prorata_data["prorata_total_CC_depart"]  # Dernier mois
+                somme_due = prorata_departure["prorata_total_CC_depart"]  # Dernier mois
                 jour_debut = 1
                 titre_detail_reglement = titre_detail_du_reglement_quittance 
                 paragraphe_detail_reglement = paragraphe_detail_du_reglement_quittance_dernier_mois
-                montant1 = prorata_data["prorata_loyer_depart"]
-                montant2 = prorata_data["prorata_charges_depart"]
+                montant1 = prorata_departure["prorata_loyer_depart"]
+                montant2 = prorata_departure["prorata_charges_depart"]
+                quittance_requests = build_receipts_requests_dernier_mois(somme_due, jour_debut, titre_detail_reglement, paragraphe_detail_reglement, annee_courante, mois, dernier_jour_mois,jour_depart,prorata_departure)
+
 
             elif int(annee_courante) == annee_arrivee and mois_index == mois_index_arrivee:
                 somme_due = prorata_data["prorata_total_CC"]  # Premier mois
@@ -75,7 +77,9 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
                 titre_detail_reglement = titre_detail_du_reglement_quittance 
                 paragraphe_detail_reglement = paragraphe_detail_du_reglement_quittance_premier_mois
                 montant1 = prorata_data["prorata_loyer"]
-                montant2 = prorata_data["prorata_charges"]             
+                montant2 = prorata_data["prorata_charges"]  
+                quittance_requests = build_receipts_requests(somme_due, jour_debut, titre_detail_reglement, paragraphe_detail_reglement, annee_courante, mois, dernier_jour_mois)
+           
 
             else:
                 somme_due = prorata_data["loyer_CC"]  # Mois intermédiaires    
@@ -84,14 +88,15 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
                 paragraphe_detail_reglement = ""
                 montant1 = prorata_data["loyer"]
                 montant2 = prorata_data["charges"]          
-
-            quittance_requests = build_receipts_requests(somme_due, jour_debut, titre_detail_reglement, paragraphe_detail_reglement, annee_courante, mois, dernier_jour_mois,jour_depart)
+                quittance_requests = build_receipts_requests(somme_due, jour_debut, titre_detail_reglement, paragraphe_detail_reglement, annee_courante, mois, dernier_jour_mois)
+            
             receipt_name = generate_quittance_doc_name(jour_creation_quittance, mois_index, annee_courante, formatted_name, montant1, montant2)
+            quittance_requests_array = quittance_requests or []
 
             create_and_export_doc_from_template(
                 template_id=TEMPLATE_QUITTANCE_ID,
                 new_document_name=receipt_name,
-                replace_requests=quittance_requests + all_replace_requests,
+                replace_requests=quittance_requests_array + all_replace_requests,
                 folder_id=at_folder_id,
                 drive_service=drive_service,
                 docs_service=docs_service

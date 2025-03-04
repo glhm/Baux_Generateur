@@ -76,7 +76,7 @@ def export_doc_to_pdf_and_upload(doc_id, drive_service, folder_id, file_name):
     media = MediaIoBaseUpload(file_stream, mimetype='application/pdf')
 
     uploaded_file = drive_service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-    print(f"[INFO] Fichier PDF uploadé avec succès. ID : {uploaded_file.get('id')}")
+    print(f"[INFO] Fichier PDF uploadé avec succès.")
 
 
 def delete_file_by_name(service, file_name):
@@ -93,7 +93,7 @@ def delete_file_by_name(service, file_name):
     for item in items:
         print(f"[INFO] Suppression du fichier {item['name']} (ID: {item['id']})")
         service.files().delete(fileId=item['id']).execute()
-        print(f"[INFO] Fichier {item['name']} supprimé avec succès.")
+        print(f"[INFO] Fichier {file_name} supprimé avec succès.")
 
 
 def find_file_in_folder(folder_id, file_name, drive_service):
@@ -123,7 +123,7 @@ def get_or_create_year_folder(drive_service, parent_folder_id, year):
     files = results.get('files', [])
     
     if files:
-        print(f"[INFO] Dossier pour l'année {year} trouvé: {files[0]['id']}")
+        print(f"[INFO] Dossier pour l'année {year} trouvé: ")
         return files[0]['id']
     
     # Créer le dossier s'il n'existe pas
@@ -135,7 +135,7 @@ def get_or_create_year_folder(drive_service, parent_folder_id, year):
     
     try:
         folder = drive_service.files().create(body=file_metadata, fields='id').execute()
-        print(f"[INFO] Dossier pour l'année {year} créé: {folder['id']}")
+        print(f"[INFO] Dossier pour l'année {year} créé")
         return folder['id']
     except Exception as e:
         print(f"[ERROR] Erreur lors de la création du dossier pour l'année {year}: {e}")
@@ -199,7 +199,7 @@ def delete_existing_file_if_exists(drive_service, file_name, folder_id):
             file_id = file['id']
             print(f"[INFO] Suppression du fichier existant : {file['name']}")
             drive_service.files().delete(fileId=file_id).execute()
-            print(f"[INFO] Fichier supprimé : {file_id}")
+            print(f"[INFO] Fichier supprimé : {file_name}")
 
     except HttpError as error:
         print(f"[ERROR] Une erreur s'est produite lors de la suppression du fichier : {error}")
@@ -208,7 +208,7 @@ def delete_existing_file_if_exists(drive_service, file_name, folder_id):
 def delete_file_by_id(file_id, drive_service):
     try:
         drive_service.files().delete(fileId=file_id).execute()
-        print(f"Fichier avec l'ID {file_id} supprimé avec succès.")
+        #print(f"Fichier avec l'ID {file_id} supprimé avec succès.")
     except Exception as e:
         print(f"[ERROR] Une erreur est survenue lors de la suppression du fichier avec l'ID {file_id}: {e}")
 

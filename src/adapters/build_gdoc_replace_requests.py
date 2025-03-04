@@ -51,10 +51,7 @@ def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, ch
     all_replace_requests.extend(add_one_request("{{MONTANT_TOTAL}}", str(prorata_data["loyer_CC"])))
     
     all_replace_requests.extend(add_one_request("{{NOMBRE_JOURS_PREMIER_MOIS}}", str(prorata_data["nombre_de_jours_premier_mois"])))
-    
-    all_replace_requests.extend(add_one_request("{{PRORATA_TOTAL_CC_DEPART}}", str(prorata_data["prorata_total_CC_depart"])))
-    all_replace_requests.extend(add_one_request("{{PRORATA_LOYER_DEPART}}", str(prorata_data["prorata_loyer_depart"])))
-    all_replace_requests.extend(add_one_request("{{PRORATA_CHARGES_DEPART}}", str(prorata_data["prorata_charges_depart"])))
+
     if mention_speciale_loyer:
         all_replace_requests.extend(add_one_request("{{MENTION_SPECIALE_LOYER}}", mention_speciale_loyer))
     else:
@@ -78,7 +75,7 @@ def build_lease_requests(locataire_dict_str, guarant_dict_str, bien_dict_str, ch
     return all_replace_requests
 
 
-def build_receipts_requests(somme_due, jour_debut_quittance, titre_detail_reglement, paragraphe_detail_reglement,annee_courante,mois_courant,nombre_jour_mois,jour_depart):
+def build_receipts_requests(somme_due, jour_debut_quittance, titre_detail_reglement, paragraphe_detail_reglement,annee_courante,mois_courant,nombre_jour_mois):
     quittance_requests = []
 
     # Ajout des informations spécifiques à la quittance
@@ -89,9 +86,16 @@ def build_receipts_requests(somme_due, jour_debut_quittance, titre_detail_reglem
     quittance_requests.extend(add_one_request("{{ANNEE_COURANTE}}", str(annee_courante)))
     quittance_requests.extend(add_one_request("{{MOIS_COURANT}}", mois_courant))
     quittance_requests.extend(add_one_request("{{NOMBRE_JOUR_MOIS}}", str(nombre_jour_mois)))
-    quittance_requests.extend(add_one_request("{{JOUR_DEPART}}", str(jour_depart)))
 
 
+    return quittance_requests
+
+def build_receipts_requests_dernier_mois(somme_due, jour_debut_quittance, titre_detail_reglement, paragraphe_detail_reglement,annee_courante,mois_courant,nombre_jour_mois,jour_depart,prorata_data_depart):
+    quittance_requests = build_receipts_requests(somme_due, jour_debut_quittance, titre_detail_reglement, paragraphe_detail_reglement,annee_courante,mois_courant,nombre_jour_mois)
+    quittance_requests.extend(add_one_request("{{JOUR_DEPART}}", str(jour_depart)))      
+    quittance_requests.extend(add_one_request("{{PRORATA_TOTAL_CC_DEPART}}", str(prorata_data_depart["prorata_total_CC_depart"])))
+    quittance_requests.extend(add_one_request("{{PRORATA_LOYER_DEPART}}", str(prorata_data_depart["prorata_loyer_depart"])))
+    quittance_requests.extend(add_one_request("{{PRORATA_CHARGES_DEPART}}", str(prorata_data_depart["prorata_charges_depart"])))
     return quittance_requests
 
 
@@ -139,13 +143,16 @@ def build_requests_from_tenant_info(locataire, all_data) :
     mois_arrivee = locataire['properties']['{MOIS_ARRIVEE}']['rich_text'][0]['text']['content']
     jour_arrivee = locataire['properties']['{JOUR_ARRIVEE}']['number'] #TODO passer en chiffre 
 
-    mois_depart = locataire['properties']['{MOIS_DEPART}']['number']
-    jour_depart = locataire['properties']['{JOUR_DEPART}']['number']
+    prorata_data = compute_housing_values(loyer_dict_str, jour_arrivee, mois_arrivee)
+    
+    jour_depart = locataire.get('properties', {}).get('{JOUR_DEPART}', {}).get('number')
+    mois_depart = locataire.get('properties', {}).get('{MOIS_DEPART}', {}).get('number')
+    annee_depart = locataire.get('properties', {}).get('{ANNEE_DEPART}', {}).get('number')
+    
+    prorata_departure = None  
+    if jour_depart is not None and mois_depart is not None and annee_depart is not None:
+        prorata_departure = compute_departure_values(loyer_dict_str,jour_depart,mois_depart)
 
-    prorata_data = compute_housing_values(loyer_dict_str, jour_arrivee, mois_arrivee,jour_depart,mois_depart)
-
-
-    # Préparer les demandes de remplacement
     type_caution = locataire['properties'].get('Garantie', {}).get('select', {}).get('name', '')
     mention_speciale_loyer_data = locataire['properties'].get('MENTION_SPECIALE_LOYER', {}).get('rich_text', [])
     mention_speciale_loyer = mention_speciale_loyer_data[0]['text']['content'] if mention_speciale_loyer_data else ''   
@@ -166,7 +173,7 @@ def build_requests_from_tenant_info(locataire, all_data) :
         type_bail
     )
 
-    return all_replace_requests, type_caution, prorata_data
+    return all_replace_requests, type_caution, prorata_data,prorata_departure
 
 def build_replace_requests_from_dict(data_dict):
     requests = []

@@ -1,6 +1,6 @@
 from src.utils.date_utils import *
-
-def compute_housing_values(loyer_dict, jour_arrivee, mois_arrivee,jour_depart,mois_depart):
+#TODO pas retourner un dict...
+def compute_housing_values(loyer_dict, jour_arrivee, mois_arrivee):
     """
     Calcule les montants proratisés pour le premier mois de loyer et charges.
     
@@ -18,16 +18,11 @@ def compute_housing_values(loyer_dict, jour_arrivee, mois_arrivee,jour_depart,mo
     
     # Calcul du ratio de jours pour le premier et le dernier mois
     ratio_premier_mois = nombre_de_jours_premier_mois / dernier_jour_du_premier_mois
-    ratio_dernier_mois = jour_depart / get_dernier_jour_du_mois_par_numero(mois_depart) #TODO try le error
     
     # Calcul des montants proratisés
     prorata_total_CC = round(ratio_premier_mois * loyer_CC, 2)
     prorata_loyer = round(ratio_premier_mois * loyer, 2)
     prorata_charges = round(ratio_premier_mois * charges, 2)
-
-    prorata_total_CC_depart = round(ratio_dernier_mois * loyer_CC, 2)
-    prorata_loyer_depart = round(ratio_dernier_mois * loyer, 2)
-    prorata_charges_depart = round(ratio_dernier_mois * charges, 2)
     
     total_premier_mois = round(prorata_total_CC + 2 * loyer, 2)
     montant_garanties = round(2 * loyer, 2)
@@ -44,7 +39,22 @@ def compute_housing_values(loyer_dict, jour_arrivee, mois_arrivee,jour_depart,mo
         "loyer_CC": loyer_CC,
         "loyer": loyer,
         "charges":charges,
+    }
 
+def compute_departure_values(loyer_dict,jour_depart,mois_depart):
+    loyer = float(loyer_dict['{MONTANT_LOYER}'])
+    charges = float(loyer_dict['{MONTANT_CHARGES}'])
+    loyer_CC = loyer + charges
+
+    # Calcul du ratio de jours pour le premier et le dernier mois
+    ratio_dernier_mois = jour_depart / get_dernier_jour_du_mois_par_numero(mois_depart) #TODO try le error
+    
+    prorata_total_CC_depart = round(ratio_dernier_mois * loyer_CC, 2)
+    prorata_loyer_depart = round(ratio_dernier_mois * loyer, 2)
+    prorata_charges_depart = round(ratio_dernier_mois * charges, 2)
+    
+    
+    return {
         "prorata_total_CC_depart": prorata_total_CC_depart,
         "prorata_loyer_depart": prorata_loyer_depart,
         "prorata_charges_depart": prorata_charges_depart
