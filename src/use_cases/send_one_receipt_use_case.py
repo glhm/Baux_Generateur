@@ -34,12 +34,12 @@ def send_receipt_from_drive(locataire, drive_service, gmail_service, formatted_n
     current_year = current_date.strftime('%Y')
     current_month_num = current_date.strftime('%m')
     mail_locataire = locataire['properties']['Mail']['rich_text'][0]['text']['content']
-
-    # 📌 Motif regex pour xx entre 00 et 30
+    id_bien = locataire['properties']['🏠 Biens']['relation'][0]['id']
+  # 📌 Motif regex pour xx entre 00 et 30
     pattern = get_quittance_pattern(current_month_num,current_year,formatted_name)
 
-
-    current_year_folder = get_or_create_year_folder(drive_service, ID_REPO_LOCATIF, current_year)
+    #id repo
+    current_year_folder = get_or_create_year_folder(drive_service, MAP_PAGE_NOTION_BIEN_TO_REPO[id_bien], current_year)
     recettes_folder = get_or_create_subfolder(drive_service, current_year_folder, "Recettes")
     at_folder = get_or_create_subfolder(drive_service, recettes_folder, f"AT")
 

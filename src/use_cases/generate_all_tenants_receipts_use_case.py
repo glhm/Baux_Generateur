@@ -23,11 +23,12 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
     jour_depart = locataire['properties'].get('{JOUR_DEPART}', {}).get('number')
     mois_depart = locataire['properties'].get('{MOIS_DEPART}', {}).get('number')
     annee_depart = locataire['properties'].get('{ANNEE_DEPART}', {}).get('number')
+    id_bien = locataire['properties']['🏠 Biens']['relation'][0]['id']
 
     has_departure_date =prorata_departure is not None
 
     if has_departure_date:
-        print(f"Dernier mois completé")
+        print(f"Date départ connue")
 
     
     for annee_obj in annee_selectionnees:
@@ -38,7 +39,7 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
             drive_service,
             get_or_create_subfolder(
                 drive_service,
-                get_or_create_year_folder(drive_service, ID_REPO_LOCATIF, annee_courante),
+                get_or_create_year_folder(drive_service, MAP_PAGE_NOTION_BIEN_TO_REPO[id_bien], annee_courante),
                 "Recettes"
             ),
             "AT"
