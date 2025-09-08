@@ -102,3 +102,14 @@ def generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all
                 drive_service=drive_service,
                 docs_service=docs_service
             )
+
+def generate_rental_deposit_receipt_for_one_tenant(formatted_name, docs_service, drive_service, all_replace_requests):
+    new_document_name = f"Attestation_reception_depot_garantie_{formatted_name}"
+    create_and_export_doc_from_template(
+                template_id=TEMPLATE_ATTESTATION_RECE_CAUTION_ID,
+                new_document_name=new_document_name,
+                replace_requests= all_replace_requests,
+                folder_id=ID_REPO_BAUX,
+                drive_service=drive_service,
+                docs_service=docs_service
+            )

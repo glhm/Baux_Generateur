@@ -65,7 +65,7 @@ def export_doc_to_pdf_and_upload(doc_id, drive_service, folder_id, file_name):
     # Repositionner le curseur du stream au début
     file_stream.seek(0)
     # Supprimer l'ancien fichier s'il existe
-    delete_existing_file_if_exists(drive_service, file_name, folder_id)
+    #delete_existing_file_if_exists(drive_service, file_name, folder_id)
 
     # Uploader le fichier PDF dans le dossier spécifique sur Google Drive
     file_metadata = {
@@ -245,7 +245,6 @@ def create_and_export_doc_from_template(template_id, new_document_name, replace_
     except Exception as e:
         print(f"[ERROR] Une erreur est survenue lors du traitement du document {new_document_name}: {e}")
 
-        import re
 
 def delete_files_matching_regex(drive_service, folder_id, pattern):
     """Supprime tous les fichiers dans un dossier Google Drive qui correspondent à un motif regex, avec gestion des erreurs."""

@@ -129,7 +129,7 @@ def build_requests_from_tenant_info(locataire, all_data) :
         for loyer in all_data['loyer']['results']:
             if loyer['id'] == loyer_id:
                 loyer_dict = extract_fields_from_database(loyer)
-                #print(chambre_dict)
+                print(loyer_dict)
 
     # tout convertir en string
     locataire_dict_str = {key: str(value) for key, value in locataire_dict.items()}

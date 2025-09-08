@@ -15,8 +15,13 @@ def extract_fields(properties):
             field_values_dict[field_name] = field_data['rich_text'][0]['text']['content']
         elif 'title' in field_data and field_data['title']:
             field_values_dict[field_name] = field_data['title'][0]['text']['content']
-        elif 'number' in field_data and field_data['number']:
+        elif 'number' in field_data:
             field_values_dict[field_name] = field_data['number']
+        elif 'formula' in field_data:
+            formula_type = field_data['formula']['type']
+            # On gère selon le type de la formule
+            if formula_type == 'number':
+                field_values_dict[field_name] = field_data['formula']['number']
     
     return field_values_dict
 

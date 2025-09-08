@@ -54,13 +54,22 @@ def send_receipt_from_drive(locataire, drive_service, gmail_service, formatted_n
         update_notion_property(locataire['id'], envoi_quittance_result_id, QUITTANCE_RESULT_IDS["QuittanceFailure"])
         return
 
-    query = f"name contains 'Quittance--' and '{at_folder}' in parents"
-    results = drive_service.files().list(q=query, fields="files(id, name)").execute()
+    query = (
+        f"name contains 'Quittance--' "
+        f"and '{at_folder}' in parents "
+        f"and mimeType = 'application/pdf' "
+        f"and trashed = false"
+    )
+    results = drive_service.files().list(
+        q=query,
+        fields="files(id, name, mimeType)"
+    ).execute()
+
     files = results.get('files', [])
 
-
-    # 📌 Filtrer les fichiers selon le modèle flexible et précis
     matching_files = [f for f in files if pattern.match(f['name'])]
+    for f in matching_files:
+        print("[DEBUG] Vu dans dossier AT:", f["name"], f["mimeType"])
 
     # ❌ Gestion des cas d'erreur avec la fonction centralisée
     if len(matching_files) == 0:

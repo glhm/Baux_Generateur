@@ -10,7 +10,10 @@ def compute_housing_values(loyer_dict, jour_arrivee, mois_arrivee):
     :return: Dictionnaire avec les montants proratisés calculés.
     """
     loyer = float(loyer_dict['{MONTANT_LOYER}'])
+    # degueulasse
+    #charges = float(loyer_dict['{ASSAINISSEMENT}']) + float(loyer_dict['{EAU}']) + float(loyer_dict['{CHAUFFAGE}']) + float(loyer_dict['{ELEC}']) + float(loyer_dict['{WIFI}']) + float(loyer_dict['{MENAGE}'])
     charges = float(loyer_dict['{MONTANT_CHARGES}'])
+
     loyer_CC = loyer + charges
 
     dernier_jour_du_premier_mois = map_mois_to_dernier_jour[mois_arrivee]
