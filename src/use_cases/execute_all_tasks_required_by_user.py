@@ -23,7 +23,7 @@ def do_tasks_required_from_user():
         
             if is_receipts_generation_enabled(locataire):
                 generate_rental_deposit_receipt_for_one_tenant(formatted_name,docs_service,drive_service, all_replace_requests)
-               # generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all_replace_requests, prorata_data,formatted_name,prorata_departure)
+                generate_receipts_for_one_tenant(locataire, docs_service, drive_service, all_replace_requests, prorata_data,formatted_name,prorata_departure)
         if is_quittance_sending_enabled(locataire):
                 send_receipt_from_drive(locataire, drive_service, gmail_service,formatted_name)
 

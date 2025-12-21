@@ -54,3 +54,7 @@ image::images/use_case_1-drawio.svg[System Design overview]
      "guarantors": "ID of your Guarantors database"
    }
 
+=== Run 
+> python -m venv venv
+> python .\main.py
+
