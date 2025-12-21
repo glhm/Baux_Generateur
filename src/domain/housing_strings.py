@@ -25,11 +25,11 @@ la_caution_physique = "Désigné ci-après la caution solidaire et indivisible d
 
 cautionnement_physique = "Il est expressément convenu entre les parties que le paiement du loyer, des charges, et de toutes autres obligations du locataire résultant du présent bail est garanti par {{NOM_GARANT}}, demeurant à {{ADRESSE_GARANT}}, qui a signé un acte de cautionnement solidaire."
 
-cautionnement_visale = "Le locataire a obtenu une garantie Visale pour couvrir d'éventuels impayés de loyer et charges locatives. Cette garantie est accordée par Action Logement et est valide pour toute la durée du présent contrat de location. Le Bailleur a signé le Contrat de cautionnement Visale n°{{N_CONTRAT_VISALE}} et a reçu le Visa Visale n°{{N_VISALE}} attribué le {{DATE_EMISSION_VISALE}}, annexé au présent contrat. En cas de défaut de paiement de la part du locataire, le bailleur pourra faire appel à cette garantie conformément aux conditions prévues par le dispositif Visale."
+cautionnement_visale = "Le Bailleur a signé un contrat de cautionnement visale avec Action Logement Services. Le contrat de cautionnement visale est joint en annexe de bail. En cas de défaut de paiement de la part du locataire, le bailleur pourra faire appel à cette garantie conformément aux conditions prévues par le dispositif décrit dans le contrat de cautionnement annexé."
 
 signature_des_garants = "Signature du garant"
 
-doc_visale = "F - Le Visa Visale du locataire" 
+doc_visale = "F - Le Contrat de cautionnement visale" 
 
 paragraphe_detail_du_reglement_quittance_premier_mois = "Avec arrivée le {{JOUR_ARRIVEE}} du mois : \n \
 Prorata au nombre de jours : \n \
