@@ -19,7 +19,7 @@ def get_mock_locataire_physique():
                     "{ADRESSE_LOCATAIRE}": {"rich_text": [{"text": {"content": "123 Rue de la Paix, 75001 Paris"}}]},
                     "{MAIL}": {"rich_text": [{"text": {"content": "jean.dupont@email.com"}}]},
                     "{TEL}": {"rich_text": [{"text": {"content": "06 12 34 56 78"}}]},
-                    "{MOIS_ARRIVEE}": {"rich_text": [{"text": {"content": "janvier"}}]},
+                    "{MOIS_ARRIVEE}": {"rich_text": [{"text": {"content": "Janvier"}}]},
                     "{JOUR_ARRIVEE}": {"number": 15},
                     "{JOUR_DEPART}": {"number": None},
                     "{MOIS_DEPART}": {"number": None},
@@ -32,9 +32,9 @@ def get_mock_locataire_physique():
                     "🏠 Biens": {"relation": [{"id": "bien-id-789"}]},
                     "🛏️ Chambres": {"relation": [{"id": "chambre-id-012"}]},
                     "💲 Loyers": {"relation": [{"id": "loyer-id-345"}]},
-                    "Générer le bail": {"checkbox": True},
-                    "Générer les quittances": {"checkbox": False},
-                    "Envoyer Quittance": {"checkbox": False},
+                    "ActiverGeneration": {"checkbox": True},
+                    "ActiverGenerationQuittances": {"checkbox": False},
+                    "EnvoyerQuittance": {"checkbox": False},
                 }
             }
         ]
@@ -56,7 +56,7 @@ def get_mock_locataire_visale():
                     "{ADRESSE_LOCATAIRE}": {"rich_text": [{"text": {"content": "45 Avenue des Champs, 69001 Lyon"}}]},
                     "{MAIL}": {"rich_text": [{"text": {"content": "marie.martin@email.com"}}]},
                     "{TEL}": {"rich_text": [{"text": {"content": "06 98 76 54 32"}}]},
-                    "{MOIS_ARRIVEE}": {"rich_text": [{"text": {"content": "février"}}]},
+                    "{MOIS_ARRIVEE}": {"rich_text": [{"text": {"content": "Février"}}]},
                     "{JOUR_ARRIVEE}": {"number": 1},
                     "{JOUR_DEPART}": {"number": None},
                     "{MOIS_DEPART}": {"number": None},
@@ -69,16 +69,16 @@ def get_mock_locataire_visale():
                     "🏠 Biens": {"relation": [{"id": "bien-id-789"}]},
                     "🛏️ Chambres": {"relation": [{"id": "chambre-id-012"}]},
                     "💲 Loyers": {"relation": [{"id": "loyer-id-345"}]},
-                    "Générer le bail": {"checkbox": True},
-                    "Générer les quittances": {"checkbox": False},
-                    "Envoyer Quittance": {"checkbox": False},
+                    "ActiverGeneration": {"checkbox": True},
+                    "ActiverGenerationQuittances": {"checkbox": False},
+                    "EnvoyerQuittance": {"checkbox": False},
                 }
             }
         ]
     }
 
 
-def get_mock_bien():
+def readme.adocget_mock_bien():
     """Mock property (bien) data."""
     return {
         "results": [
@@ -156,8 +156,8 @@ def get_mock_loyer():
             {
                 "id": "loyer-id-345",
                 "properties": {
-                    "{LOYER_HC}": {"number": 450},
-                    "{CHARGES}": {"number": 50},
+                    "{MONTANT_LOYER}": {"number": 450},
+                    "{MONTANT_CHARGES}": {"number": 50},
                     "{LOYER_CC}": {"formula": {"type": "number", "number": 500}},
                     "{DEPOT_GARANTIE}": {"number": 450},
                 }

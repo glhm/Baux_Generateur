@@ -58,3 +58,8 @@ image::images/use_case_1-drawio.svg[System Design overview]
 > python -m venv venv
 > python .\main.py
 
+
+=== Tests
+> .\venv\Scripts\python.exe -m pytest tests/e2e/test_generate_lease_e2e.py -v
+
+
