@@ -49,7 +49,7 @@ class TestGenerateLeaseE2E:
         # Set environment variable for Notion API
         with patch.dict(os.environ, {'NOTION_API_SECRET': 'test-secret'}):
             # Mock Notion API calls
-            with patch('src.services.notion_service.requests.post') as mock_notion:
+            with patch('src.adapters.notion_adapter.requests.post') as mock_notion:
                 self._setup_notion_mock(mock_notion, mock_data)
                 
                 # Mock Google services authentication
@@ -61,7 +61,7 @@ class TestGenerateLeaseE2E:
                     )
                     
                     # Mock document creation - track calls
-                    with patch('src.use_cases.generate_lease_use_case.create_and_export_doc_from_template') as mock_create:
+                    with patch('src.adapters.google_drive_adapter.create_and_export_doc_from_template') as mock_create:
                         mock_create.side_effect = lambda **kwargs: self._track_doc_creation(mock_services, kwargs)
                         
                         # Act
@@ -178,7 +178,7 @@ class TestGenerateLeaseE2E:
         # Set environment variable for Notion API
         with patch.dict(os.environ, {'NOTION_API_SECRET': 'test-secret'}):
             # Mock Notion API calls
-            with patch('src.services.notion_service.requests.post') as mock_notion:
+            with patch('src.adapters.notion_adapter.requests.post') as mock_notion:
                 self._setup_notion_mock(mock_notion, mock_data)
                 
                 # Mock Google services authentication
@@ -190,7 +190,7 @@ class TestGenerateLeaseE2E:
                     )
                     
                     # Mock document creation - track calls
-                    with patch('src.use_cases.generate_lease_use_case.create_and_export_doc_from_template') as mock_create:
+                    with patch('src.adapters.google_drive_adapter.create_and_export_doc_from_template') as mock_create:
                         mock_create.side_effect = lambda template_id, new_document_name, replace_requests, folder_id, drive_service, docs_service: \
                             mock_services.record_document_creation(template_id, new_document_name, replace_requests, folder_id)
                         
@@ -299,7 +299,7 @@ class TestLeaseePlaceholderReplacement:
         mock_data = get_mock_all_data_physique()
         
         with patch.dict(os.environ, {'NOTION_API_SECRET': 'test-secret'}):
-            with patch('src.services.notion_service.requests.post') as mock_notion:
+            with patch('src.adapters.notion_adapter.requests.post') as mock_notion:
                 self._setup_notion_mock(mock_notion, mock_data)
                 
                 with patch('src.services.google_doc_and_drive_service.authenticate_and_create_services') as mock_auth:
@@ -309,7 +309,7 @@ class TestLeaseePlaceholderReplacement:
                         mock_services.gmail_service
                     )
                     
-                    with patch('src.use_cases.generate_lease_use_case.create_and_export_doc_from_template') as mock_create:
+                    with patch('src.adapters.google_drive_adapter.create_and_export_doc_from_template') as mock_create:
                         captured_requests = []
                         
                         def capture_requests(template_id, new_document_name, replace_requests, folder_id, drive_service, docs_service):
@@ -339,7 +339,7 @@ class TestLeaseePlaceholderReplacement:
         mock_data = get_mock_all_data_visale()
         
         with patch.dict(os.environ, {'NOTION_API_SECRET': 'test-secret'}):
-            with patch('src.services.notion_service.requests.post') as mock_notion:
+            with patch('src.adapters.notion_adapter.requests.post') as mock_notion:
                 self._setup_notion_mock(mock_notion, mock_data)
                 
                 with patch('src.services.google_doc_and_drive_service.authenticate_and_create_services') as mock_auth:
@@ -349,7 +349,7 @@ class TestLeaseePlaceholderReplacement:
                         mock_services.gmail_service
                     )
                     
-                    with patch('src.use_cases.generate_lease_use_case.create_and_export_doc_from_template') as mock_create:
+                    with patch('src.adapters.google_drive_adapter.create_and_export_doc_from_template') as mock_create:
                         captured_requests = []
                         
                         def capture_requests(template_id, new_document_name, replace_requests, folder_id, drive_service, docs_service):
