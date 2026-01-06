@@ -78,7 +78,7 @@ def get_mock_locataire_visale():
     }
 
 
-def readme.adocget_mock_bien():
+def get_mock_bien():
     """Mock property (bien) data."""
     return {
         "results": [
