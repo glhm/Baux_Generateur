@@ -1,65 +1,112 @@
-= Lease_Generator
-Leases_Generator
+= Lease Generator
+:toc:
+:toclevels: 2
 
-An automated tool for generating residential leases based on tenant, guarantor, and property data. 
-Connected to **Notion** for data management and Google Docs for document generation.
+Lease Generator automates lease and rent receipt production from Notion data, then delivers finalized documents through Google services.
 
-== Overview
-Lease_Generator is a tool designed to automate the creation of residential leases by automatically retrieving information about tenants, guarantors, properties, and rooms from Notion. It then generates Google Docs documents based on this data and exports the leases in PDF format.
+== Why this project
 
-== Features
-- Automatically retrieves tenant, guarantor, property, room, and real estate data from Notion.
-- Automatically generates Google Docs based on a predefined template.
-- Allows customization of lease templates.
-- Exports generated leases in PDF format.
+This codebase is a practical example of turning repetitive property-management workflows into reliable, testable automation:
 
-== Uses Cases  
+* Pull structured data from Notion databases.
+* Build lease or receipt payloads in the domain layer.
+* Generate Google Docs from templates and export as PDF.
+* Optionally send receipts by email and write execution results back to Notion.
 
-=== Use Case 1 : User checks "Send Receipt" field in Notion to send an email to the adequate tenant
-==== Features 
-- on "Send Receipt" field checked in Notion Tenant database, send an email to the tenant with a receipt of the montly payment based on the information of the tenant
+== Core capabilities
+
+* Lease generation from tenant, guarantor, room, and property records.
+* Monthly receipt generation.
+* “Send receipt” orchestration flow driven from Notion checkboxes.
+* Result tracking in Notion (success/failure status updates).
+* Unit and end-to-end test coverage for the most critical flows.
+
+== Architecture at a glance
+
+The repository follows a layered approach:
+
+* `src/domain/` for business entities and domain services.
+* `src/use_cases/` for orchestration logic (application layer).
+* `src/adapters/` for integrations (Notion, Google, mappers).
+* `tests/` split between focused unit tests and e2e scenarios.
+
+This separation helps keep domain logic isolated from external APIs, which makes refactoring and testing easier.
+
+== Main use case: Send a receipt from Notion
+
+When a user checks the `Send Receipt` field in the Tenant database:
+
+. Tenant and related payment data are loaded.
+. A receipt document is generated from template data.
+. An email with the receipt attachment is sent to the tenant.
+. The `Sending Result` field is updated in Notion.
+
 image::images/tenant_reinitialized_to_check.png[Tenant DB reinitialized]
-
-- the tenant then receives the email with the attached receipt
 image::images/mail.png[Mail with attached receipt]
-
-- the Notion database field "Sending Result" is then updated with the result of the process
 image::images/result_after_processing.png[Result after processing]
-image::images/Testjpg.jpg[Result after processing]
+image::images/use_case_1-drawio.svg[System design overview]
 
-==== System Design 
-image::images/use_case_1-drawio.svg[System Design overview]
-
-
-
-== Configuration for Launch (Environment Setup)
+== Setup
 
 === Prerequisites
-- A Notion account with the required databases configured.
-- Notion API activated and integrated with your workspace.
-- A Google account with access to Google Docs and Google Drive.
-- Google API enabled for authentication and service access.
-- Python installed on your machine with a virtual environment set up.
 
-=== Setup Steps
+* Python 3.11+ (recommended).
+* A Notion workspace + API integration.
+* Google APIs enabled (Docs, Drive, Gmail depending on the flow).
+* Credentials for both Notion and Google integrations.
 
-1. Update the code to include the ID of your Google template for leases and guarantee deeds.
-2. Create a `mysecrets/` directory and add a file named `notion_secrets.py` with the following content:
-   ```python
-   NOTION_API_SECRET = "key_to_your_notion_integration"
-   DATABASE_IDS = {
-     "property": "ID of your Property database",
-     "tenant": "ID of your Tenant database",
-     "rooms": "ID of your Rooms database",
-     "guarantors": "ID of your Guarantors database"
-   }
+=== Environment configuration
 
-=== Run 
-> python -m venv venv
-> python .\main.py
+. Create a virtual environment:
++
+[source,bash]
+----
+python -m venv venv
+----
 
+. Create `mysecrets/notion_secrets.py`:
++
+[source,python]
+----
+NOTION_API_SECRET = "key_to_your_notion_integration"
+DATABASE_IDS = {
+    "property": "ID of your Property database",
+    "tenant": "ID of your Tenant database",
+    "rooms": "ID of your Rooms database",
+    "guarantors": "ID of your Guarantors database",
+}
+----
 
-=== Tests
-> .\venv\Scripts\python.exe -m pytest tests/e2e/test_generate_lease_e2e.py -v
+. Add Google credentials/config expected by the adapters.
 
+== Run
 
+[source,bash]
+----
+python main.py
+----
+
+== Tests
+
+Run the full test suite:
+
+[source,bash]
+----
+pytest -v
+----
+
+Run only end-to-end lease generation:
+
+[source,bash]
+----
+pytest tests/e2e/test_generate_lease_e2e.py -v
+----
+
+== Interview/demo framing
+
+If you use this project for a technical interview, highlight:
+
+* Clear separation between domain logic and external integrations.
+* Incremental refactoring strategy from legacy/vibe-coded flows to use-case-driven code.
+* Defensive adapter boundaries (mappers + provider abstractions).
+* Automated checks that protect the highest-risk user paths.

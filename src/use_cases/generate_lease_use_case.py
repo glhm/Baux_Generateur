@@ -1,7 +1,6 @@
 from src.ports.template_renderer_port import TemplateRenderer
 from src.domain.services.placeholder_service import PlaceholderService
 from src.domain.entities.lease import Lease
-from src.domain.enums import GuarantorType
 from src.conf.info_apis import ID_TEMPLATE_BAIL_MEUBLE, CAUTION_ID
 
 class GenerateLeaseUseCase:
@@ -18,7 +17,7 @@ class GenerateLeaseUseCase:
         tenant = lease.tenant
         
         # 1. Compute Placeholders using the Lease aggregate
-        replacements = self.compute(lease)
+        replacements = self.placeholder_service.generate_placeholders(lease)
 
         # 2. Render Lease Document
         doc_name = f"Bail_location_{tenant.full_name}"
