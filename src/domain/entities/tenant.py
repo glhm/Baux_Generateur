@@ -10,31 +10,40 @@ from src.domain.enums import LeaseType, GuarantorType
 @dataclass
 class Tenant:
     """Represents a Tenant (Locataire) entity."""
-    # From DTO fields
+    # Required fields – always filled in Notion
     nom: str
     envoyer_quittance: bool
-    statut_envoi_quittance: Optional[str] = None
-    activer_generation: bool = False
-    email: Optional[str] = None
-    type_bail: Optional[LeaseType] = None
-    type_garantie: Optional[GuarantorType] = None
+    activer_generation: bool
+    email: str
+    type_bail: LeaseType
+    type_garantie: GuarantorType
+    date_naissance: str
+    lieu_naissance: str
+    jour_arrivee: int
+    mois_arrivee: str
+    annee_arrivee: int
+    statut_envoi_quittance: str = ""
+    annees: List[str] = field(default_factory=list)
+
+    # Optional – may not be filled depending on context
+    mention_speciale: Optional[str] = None  # seul champ texte vraiment optionnel
+
+    # Visale – remplis uniquement si type_garantie == Visale
     numero_visale: Optional[str] = None
     numero_contrat_visale: Optional[str] = None
     date_emission_visale: Optional[str] = None
-    date_naissance: Optional[str] = None
-    lieu_naissance: Optional[str] = None
-    jour_arrivee: Optional[int] = None
-    mois_arrivee: Optional[str] = None
-    annee_arrivee: Optional[int] = None
-    date_fin: Optional[str] = None
-    annees: List[str] = field(default_factory=list)
-    mention_speciale: Optional[str] = None
 
-    # Aggregates
-    guarantors: List[Guarantor] = field(default_factory=list)
-    property_obj: Optional[Property] = None
-    room: Optional[Room] = None
-    financials: Optional[Numbers] = None
+    # Departure – may not be filled if tenant hasn't left yet
+    jour_depart: Optional[int] = None
+    mois_depart: Optional[str] = None
+    annee_depart: Optional[int] = None
+    date_fin: Optional[str] = None
+
+    # Aggregates – always present
+    guarantors: List[Guarantor] = field(default_factory=list)  # vide si Visale
+    property_obj: Property = None
+    room: Room = None
+    financials: Numbers = None
     period: Optional[Period] = None
     
     @property
@@ -45,19 +54,22 @@ class Tenant:
         def __init__(self):
             self._nom = ""
             self._envoyer_quittance = False
-            self._statut_envoi_quittance = None
+            self._statut_envoi_quittance = ""
             self._activer_generation = False
-            self._email = None
+            self._email = ""
             self._type_bail = None
             self._type_garantie = None
             self._numero_visale = None
             self._numero_contrat_visale = None
             self._date_emission_visale = None
-            self._date_naissance = None
-            self._lieu_naissance = None
-            self._jour_arrivee = None
-            self._mois_arrivee = None
-            self._annee_arrivee = None
+            self._date_naissance = ""
+            self._lieu_naissance = ""
+            self._jour_arrivee = 0
+            self._mois_arrivee = ""
+            self._annee_arrivee = 0
+            self._jour_depart = None
+            self._mois_depart = None
+            self._annee_depart = None
             self._date_fin = None
             self._annees = []
             self._mention_speciale = None
@@ -88,13 +100,11 @@ class Tenant:
             self._email = email
             return self
 
-        def with_type_bail(self, type_bail: str):
-            # Conversion logic if string is passed
+        def with_type_bail(self, type_bail):
             if isinstance(type_bail, str):
                 try:
                     self._type_bail = LeaseType(type_bail)
                 except ValueError:
-                    # Fallback or strict? Let's try to match by name or value casually
                     for t in LeaseType:
                         if t.value.lower() == type_bail.lower():
                             self._type_bail = t
@@ -103,7 +113,7 @@ class Tenant:
                 self._type_bail = type_bail
             return self
 
-        def with_type_garantie(self, type_gar: str):
+        def with_type_garantie(self, type_gar):
              if isinstance(type_gar, str):
                 try:
                     self._type_garantie = GuarantorType(type_gar)
@@ -131,6 +141,12 @@ class Tenant:
             self._jour_arrivee = jour
             self._mois_arrivee = mois
             self._annee_arrivee = annee
+            return self
+
+        def with_depart(self, jour: int, mois: str, annee: int):
+            self._jour_depart = jour
+            self._mois_depart = mois
+            self._annee_depart = annee
             return self
 
         def with_date_fin(self, date_f: str):
@@ -185,6 +201,9 @@ class Tenant:
                 jour_arrivee=self._jour_arrivee,
                 mois_arrivee=self._mois_arrivee,
                 annee_arrivee=self._annee_arrivee,
+                jour_depart=self._jour_depart,
+                mois_depart=self._mois_depart,
+                annee_depart=self._annee_depart,
                 date_fin=self._date_fin,
                 annees=self._annees,
                 mention_speciale=self._mention_speciale,

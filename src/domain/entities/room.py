@@ -1,25 +1,20 @@
-from dataclasses import dataclass, field
-from typing import List, Optional
+from dataclasses import dataclass
 
 @dataclass
 class Room:
     """Represents a Room (Chambre) entity."""
-    name: str # nom
-    localisation: Optional[str] = None
-    surface: Optional[float] = None
-    volume: Optional[str] = None # Or float? DTO said str (Texte/Unité)
-    # linked IDs might not be needed in Domain Entity if we use object references, 
-    # but for now let's keep them or just rely on aggregation in Tenant?
-    # Tenant has a Room. Room might belong to a Property. 
-    # In Clean Architecture, Entities should ideally link by Reference or ID. 
-    # Let's keep data fields.
+    # All fields are always filled in Notion DB
+    name: str
+    localisation: str
+    surface: float
+    volume: str
 
     class Builder:
         def __init__(self):
             self._name = ""
-            self._localisation = None
-            self._surface = None
-            self._volume = None
+            self._localisation = ""
+            self._surface = 0.0
+            self._volume = ""
 
         def with_name(self, name: str):
             self._name = name

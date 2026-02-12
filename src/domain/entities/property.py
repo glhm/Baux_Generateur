@@ -1,46 +1,44 @@
 from dataclasses import dataclass
-from typing import Optional
 
 @dataclass
 class Property:
     """Represents a Property (Bien) entity."""
-    # Matched to NotionBienDTO
-    address: str # "adresse" (Title)
-    surface_habitable: Optional[str] = None
-    numero_dpe: Optional[str] = None
-    autres_parties: Optional[str] = None
-    date_construction: Optional[int] = None
-    designation: Optional[str] = None
-    classe_dpe: Optional[str] = None
-    elements_equipement: Optional[str] = None
-    enumeration_contenu: Optional[str] = None
-    modalite_chauffage: Optional[str] = None
-    modalite_eau: Optional[str] = None
-    nombre_pieces: Optional[int] = None
-    regime_juridique: Optional[str] = None
-    type_habitat: Optional[str] = None
+    # All fields are always filled in Notion DB
+    address: str
+    surface_habitable: str
+    numero_dpe: str
+    autres_parties: str
+    date_construction: int
+    designation: str
+    classe_dpe: str
+    elements_equipement: str
+    enumeration_contenu: str
+    modalite_chauffage: str
+    modalite_eau: str
+    nombre_pieces: int
+    regime_juridique: str
+    type_habitat: str
 
-    # Logic helpers
     @property
     def name(self) -> str:
-        return self.address # Often address IS the name in this model
+        return self.address
 
     class Builder:
         def __init__(self):
             self._address = ""
-            self._surface_habitable = None
-            self._numero_dpe = None
-            self._autres_parties = None
-            self._date_construction = None
-            self._designation = None
-            self._classe_dpe = None
-            self._elements_equipement = None
-            self._enumeration_contenu = None
-            self._modalite_chauffage = None
-            self._modalite_eau = None
-            self._nombre_pieces = None
-            self._regime_juridique = None
-            self._type_habitat = None
+            self._surface_habitable = ""
+            self._numero_dpe = ""
+            self._autres_parties = ""
+            self._date_construction = 0
+            self._designation = ""
+            self._classe_dpe = ""
+            self._elements_equipement = ""
+            self._enumeration_contenu = ""
+            self._modalite_chauffage = ""
+            self._modalite_eau = ""
+            self._nombre_pieces = 0
+            self._regime_juridique = ""
+            self._type_habitat = ""
 
         def with_adresse(self, adresse: str):
             self._address = adresse

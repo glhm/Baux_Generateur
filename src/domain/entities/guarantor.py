@@ -1,20 +1,17 @@
 from dataclasses import dataclass
-from typing import Optional
-from src.domain.enums import GuarantorType
 
 @dataclass
 class Guarantor:
     """Represents a Guarantor (Garant) entity."""
-    # Matched to NotionGarantDTO
-    full_name_raw: str 
-    email: Optional[str] = None
+    # All fields are always filled in Notion DB
+    full_name_raw: str
+    email: str
+    phone_number: str
+    address_raw: str
+    date_naissance: str
+    lieu_naissance: str
     masquer: bool = False
-    phone_number: Optional[str] = None
-    address_raw: Optional[str] = None
-    date_naissance: Optional[str] = None
-    lieu_naissance: Optional[str] = None
-    type_caution: Optional[GuarantorType] = None # Added field if relevant for Guarantor entity itself, though Tenant has 'type_garantie'
-    
+
     @property
     def full_name(self) -> str:
         return self.full_name_raw
@@ -22,13 +19,12 @@ class Guarantor:
     class Builder:
         def __init__(self):
             self._full_name_raw = ""
-            self._email = None
+            self._email = ""
             self._masquer = False
-            self._phone_number = None
-            self._address_raw = None
-            self._date_naissance = None
-            self._lieu_naissance = None
-            self._type_caution = None
+            self._phone_number = ""
+            self._address_raw = ""
+            self._date_naissance = ""
+            self._lieu_naissance = ""
 
         def with_nom_complet(self, nom: str):
             self._full_name_raw = nom
@@ -57,16 +53,7 @@ class Guarantor:
         def with_lieu_naissance(self, lieu: str):
             self._lieu_naissance = lieu
             return self
-            
-        def with_type_caution(self, type_c: str):
-             if isinstance(type_c, str):
-                try:
-                    self._type_caution = GuarantorType(type_c)
-                except ValueError:
-                    pass
-             else:
-                self._type_caution = type_c
-             return self
+
 
         def build(self) -> 'Guarantor':
             if not self._full_name_raw:
@@ -79,5 +66,4 @@ class Guarantor:
                 address_raw=self._address_raw,
                 date_naissance=self._date_naissance,
                 lieu_naissance=self._lieu_naissance,
-                type_caution=self._type_caution
             )

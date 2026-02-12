@@ -7,24 +7,22 @@ from src.domain.housing_strings import (
 )
 
 class PlaceholderService:
-    def generate_placeholders(self, lease: Lease) -> dict:
+
+    def __init__(self):
+        self._placeholders: dict = {}
+
+    def compute(self, lease: Lease) -> None:
+        """Compute the placeholder dictionary from a Lease and store it internally."""
         placeholders = {}
         
         tenant = lease.tenant
         prop = lease.property
-        room = lease.tenant.room # Accessed via tenant usually or directly? 
-        # In Lease entity: tenant, property, period, rent... Room is attached to Tenant in our structure.
         
         # 1. Tenant Info
         placeholders["{{NOM_LOCATAIRE}}"] = tenant.full_name
-        placeholders["{{PRENOM}}"] = tenant.nom.split()[1] if len(tenant.nom.split()) > 1 else "" # Weak logic, maybe store separated?
-        # Re-check Tenant entity: it has 'nom' (full string?).
-        # Actually Tenant entity has just 'nom'. Let's assume 'nom' is Full Name or split needed.
-        # Adapters usually map specific fields.
-        # Let's rely on what we have.
+        placeholders["{{PRENOM}}"] = tenant.nom.split()[1] if len(tenant.nom.split()) > 1 else ""
         placeholders["{{NOM}}"] = tenant.nom
         placeholders["{{MAIL}}"] = tenant.email or ""
-        # ... map other basic fields
         if tenant.date_naissance: placeholders["{{DATE_NAISSANCE}}"] = tenant.date_naissance
         if tenant.lieu_naissance: placeholders["{{LIEU_NAISSANCE}}"] = tenant.lieu_naissance
         
@@ -75,8 +73,12 @@ class PlaceholderService:
             placeholders["{{DUREE_CONTRAT}}"] = duree_contrat_etudiant
         else:
             placeholders["{{PARAGRAPHE_DUREE_CONTRAT}}"] = bail_meuble_duree
-            placeholders["{{TYPE_BAIL_MEUBLE}}"] = "" # As per failing test fix
+            placeholders["{{TYPE_BAIL_MEUBLE}}"] = ""
             placeholders["{{DUREE_CONTRAT}}"] = duree_contrat_meuble
             placeholders["{{MENTION_RECONDUCTION_MEUBLE}}"] = reconduction_meuble
             
-        return placeholders
+        self._placeholders = placeholders
+
+    def get(self) -> dict:
+        """Return the last computed placeholder dictionary."""
+        return self._placeholders
