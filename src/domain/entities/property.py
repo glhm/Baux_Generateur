@@ -3,8 +3,11 @@ from dataclasses import dataclass
 @dataclass
 class Property:
     """Represents a Property (Bien) entity."""
-    # All fields are always filled in Notion DB
+    id: str # Notion Page ID
+    # Removed city, postal_code
     address: str
+    owner_name: str
+    owner_address: str
     surface_habitable: str
     numero_dpe: str
     autres_parties: str
@@ -25,7 +28,10 @@ class Property:
 
     class Builder:
         def __init__(self):
+            self._id = ""
             self._address = ""
+            self._owner_name = ""
+            self._owner_address = ""
             self._surface_habitable = ""
             self._numero_dpe = ""
             self._autres_parties = ""
@@ -40,8 +46,20 @@ class Property:
             self._regime_juridique = ""
             self._type_habitat = ""
 
+        def with_id(self, id: str):
+            self._id = id
+            return self
+
         def with_adresse(self, adresse: str):
             self._address = adresse
+            return self
+            
+        def with_owner_name(self, name: str):
+            self._owner_name = name
+            return self
+
+        def with_owner_address(self, addr: str):
+            self._owner_address = addr
             return self
         
         def with_surface_habitable(self, surf: str):
@@ -94,7 +112,10 @@ class Property:
             if not self._address:
                 raise ValueError("Address is required for Property")
             return Property(
+                id=self._id,
                 address=self._address,
+                owner_name=self._owner_name,
+                owner_address=self._owner_address,
                 surface_habitable=self._surface_habitable,
                 numero_dpe=self._numero_dpe,
                 autres_parties=self._autres_parties,

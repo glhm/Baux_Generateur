@@ -20,7 +20,7 @@ def get_last_day_of_month_index(month_index: int, year: int = 2024) -> int:
 
 
 @dataclass(frozen=True)
-class Numbers:
+class Financials:
     prorata_total_CC: float
     prorata_loyer: float
     prorata_charges: float
@@ -32,10 +32,10 @@ class Numbers:
     charges: float
 
     @staticmethod
-    def calculate(loyer_amount: float, charges_amount: float, jour_arrivee: int, mois_arrivee_str: str) -> 'Numbers':
+    def calculate(loyer_amount: float, charges_amount: float, jour_arrivee: int, mois_arrivee_str: str, year: int = 2024) -> 'Financials':
         loyer_CC = loyer_amount + charges_amount
         
-        last_day = get_last_day_of_month(mois_arrivee_str) # Requires context of year, assuming current or next
+        last_day = get_last_day_of_month(mois_arrivee_str, year) # Requires context of year, assuming current or next
         
         nb_jours = last_day - jour_arrivee + 1
         ratio = nb_jours / last_day if last_day > 0 else 0
@@ -47,7 +47,7 @@ class Numbers:
         total_premier_mois = round(prorata_total_CC + 2 * loyer_amount, 2) # As per original logic: prorata + 2*loyer (caution?)
         montant_garanties = round(2 * loyer_amount, 2)
         
-        return Numbers(
+        return Financials(
             prorata_total_CC=prorata_total_CC,
             prorata_loyer=prorata_loyer,
             prorata_charges=prorata_charges,
@@ -66,10 +66,10 @@ class DepartureNumbers:
     prorata_charges_depart: float
 
     @staticmethod
-    def calculate(loyer_amount: float, charges_amount: float, jour_depart: int, mois_depart_num: int) -> 'DepartureNumbers':
+    def calculate(loyer_amount: float, charges_amount: float, jour_depart: int, mois_depart_num: int, year: int) -> 'DepartureNumbers':
         loyer_CC = loyer_amount + charges_amount
         
-        last_day = get_last_day_of_month_index(mois_depart_num)
+        last_day = get_last_day_of_month_index(mois_depart_num, year)
         ratio = jour_depart / last_day if last_day > 0 else 0
         
         return DepartureNumbers(
