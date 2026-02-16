@@ -5,15 +5,15 @@ from src.domain.entities.tenant import Tenant
 from src.domain.entities.property import Property
 from src.domain.entities.room import Room
 from src.domain.entities.financials import Financials
-from src.domain.entities.guarantor import Guarantor, PhysicalGuarantor, VisaleGuarantor
+from src.domain.entities.guarantor import Guarantor
 from src.domain.entities.value_objects import Period
-from src.domain.enums import GuarantorType, LeaseType
+#from src.domain.enums import GuarantorType, LeaseType
 from src.adapters.mappers.tenant_mapper import map_tenant
 from src.adapters.notion_helper import extract_property_value
 
 def build_lease(
     loc_data,
-    guarantors_map: Dict[str, PhysicalGuarantor],
+    guarantors_map: Dict[str, Guarantor],
     properties_map: Dict[str, Property],
     rooms_map: Dict[str, Room],
     rents_map: Dict[str, Financials]
@@ -53,16 +53,7 @@ def build_lease(
 
     # Type Garantie (moved from Tenant)
     type_gar_str = extract_property_value(props, "Garantie")
-    type_gar_enum = None
-    if type_gar_str:
-        try:
-           type_gar_enum = GuarantorType(type_gar_str)
-        except ValueError:
-             # Fallback
-             for t in GuarantorType:
-                 if t.value.lower() == type_gar_str.lower():
-                     type_gar_enum = t
-                     break
+
 
     # Type Bail (moved from Tenant)
     type_bail_str = extract_property_value(props, "TypeDeBail")

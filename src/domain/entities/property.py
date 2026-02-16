@@ -6,16 +6,13 @@ class Property:
     id: str # Notion Page ID
     # Removed city, postal_code
     address: str
-    owner_name: str
-    owner_address: str
     surface_habitable: str
-    numero_dpe: str
     autres_parties: str
     date_construction: int
     designation: str
     classe_dpe: str
-    elements_equipement: str
-    enumeration_contenu: str
+    elements_equipement_logement: str
+    enumeration_communs: str
     modalite_chauffage: str
     modalite_eau: str
     nombre_pieces: int
@@ -30,16 +27,13 @@ class Property:
         def __init__(self):
             self._id = ""
             self._address = ""
-            self._owner_name = ""
-            self._owner_address = ""
             self._surface_habitable = ""
-            self._numero_dpe = ""
             self._autres_parties = ""
             self._date_construction = 0
             self._designation = ""
             self._classe_dpe = ""
-            self._elements_equipement = ""
-            self._enumeration_contenu = ""
+            self._elements_equipement_logement = ""
+            self._enumeration_communs = ""
             self._modalite_chauffage = ""
             self._modalite_eau = ""
             self._nombre_pieces = 0
@@ -50,24 +44,15 @@ class Property:
             self._id = id
             return self
 
-        def with_adresse(self, adresse: str):
+        def with_address(self, adresse: str):
             self._address = adresse
             return self
-            
-        def with_owner_name(self, name: str):
-            self._owner_name = name
-            return self
-
-        def with_owner_address(self, addr: str):
-            self._owner_address = addr
-            return self
-        
+                    
         def with_surface_habitable(self, surf: str):
             self._surface_habitable = surf
             return self
 
-        def with_dpe(self, numero: str, classe: str):
-            self._numero_dpe = numero
+        def with_dpe(self, classe: str):
             self._classe_dpe = classe
             return self
 
@@ -83,12 +68,12 @@ class Property:
             self._designation = des
             return self
 
-        def with_equipement(self, equip: str):
-            self._elements_equipement = equip
+        def with_elements_equipement_logement(self, equip: str):
+            self._elements_equipement_logement = equip
             return self
 
-        def with_enumeration(self, enu: str):
-            self._enumeration_contenu = enu
+        def with_enumeration_communs(self, enu: str):
+            self._enumeration_communs = enu
             return self
 
         def with_modalites(self, chauffage: str, eau: str):
@@ -114,16 +99,13 @@ class Property:
             return Property(
                 id=self._id,
                 address=self._address,
-                owner_name=self._owner_name,
-                owner_address=self._owner_address,
                 surface_habitable=self._surface_habitable,
-                numero_dpe=self._numero_dpe,
                 autres_parties=self._autres_parties,
                 date_construction=self._date_construction,
                 designation=self._designation,
                 classe_dpe=self._classe_dpe,
-                elements_equipement=self._elements_equipement,
-                enumeration_contenu=self._enumeration_contenu,
+                elements_equipement_logement=self._elements_equipement_logement,
+                enumeration_communs=self._enumeration_communs,
                 modalite_chauffage=self._modalite_chauffage,
                 modalite_eau=self._modalite_eau,
                 nombre_pieces=self._nombre_pieces,

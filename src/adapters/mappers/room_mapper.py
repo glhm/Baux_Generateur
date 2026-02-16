@@ -11,10 +11,10 @@ def map_rooms(raw_chambres) -> Dict[str, Room]:
         r_id = item['id']
 
         builder = Room.Builder()\
-            .with_name(extract_property_value(props, "{NOM_CHAMBRE}"))\
+            .with_name(extract_property_value(props, "Nom"))\
             .with_surface(extract_property_value(props, "{SURFACE_CHAMBRE}"))\
-            .with_floor(extract_property_value(props, "{ETAGE}"))\
-            .with_description(extract_property_value(props, "{DESCRIPTION_CHAMBRE}"))
+            .with_volume(extract_property_value(props, "{VOLUME_HABITABLE}"))\
+            .with_localisation(extract_property_value(props, "{LOCALISATION}"))
 
         mapping[r_id] = builder.build()
     return mapping

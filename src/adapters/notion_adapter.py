@@ -5,7 +5,7 @@ import requests
 from typing import List, Dict, Any
 
 
-from src.ports.tenant_repository import LeaseRepository
+from src.ports.lease_repository import LeaseRepository
 
 from src.domain.entities.lease import Lease
 
@@ -74,7 +74,7 @@ class NotionAdapter(LeaseRepository):
         raw_data = self._fetch_related_databases()
 
 
-        guarantors_map = map_guarantors(raw_data.get('garants', {}))
+        #guarantors_map = map_guarantors(raw_data.get('garants', {}))
 
         properties_map = map_properties(raw_data.get('bien', {}))
 

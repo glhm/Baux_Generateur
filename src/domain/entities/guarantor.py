@@ -19,7 +19,6 @@ class PhysicalGuarantor(Guarantor):
     address_raw: str
     date_naissance: str
     lieu_naissance: str
-    masquer: bool = False
 
     @property
     def full_name(self) -> str:
@@ -28,8 +27,7 @@ class PhysicalGuarantor(Guarantor):
 @dataclass
 class VisaleGuarantor(Guarantor):
     """Represents a Visale Guarantor (Agency/State)."""
-    numero_visale: Optional[str]
-    numero_contrat_visale: Optional[str]
-    date_emission_visale: Optional[str]
-    # Visale doesn't have address/birthdate of a person usually, 
-    # but strictly speaking `GuarantorType.VISALE` was used on Tenant.
+    numero_visale: str
+    numero_contrat_visale: str
+    date_emission_visale: str
+

@@ -19,19 +19,12 @@ def map_guarantors(raw_garants) -> Dict[str, PhysicalGuarantor]:
         # Actually, for PhysicalGuarantor I can just construct it.
         
         mapping[g_id] = PhysicalGuarantor(
-            full_name_raw=extract_property_value(props, "{NOM_GARANT}") + " " + extract_property_value(props, "{PRENOM_GARANT}"),
-            # Wait, previously we had separate keys for nom/prenom but entity only has full_name_raw?
-            # In step 233 (old) it was full_name_raw.
-            # In step 169 (old mapper) I used separate fields.
-            # Let's combine them or use what's available. 
-            # Step 169 used "{NOM_GARANT}" and "{PRENOM_GARANT}"
-            
+            full_namew=extract_property_value(props, "{NOM_GARANT}"),
             email=extract_property_value(props, "{MAIL_GARANT}"),
             phone_number=extract_property_value(props, "{TEL_GARANT}"),
             address_raw=extract_property_value(props, "{ADRESSE_GARANT}"),
             date_naissance=extract_property_value(props, "{DATE_NAISSANCE_GARANT}"),
             lieu_naissance=extract_property_value(props, "{LIEU_NAISSANCE_GARANT}"),
-            masquer=False # Default
         )
 
     return mapping

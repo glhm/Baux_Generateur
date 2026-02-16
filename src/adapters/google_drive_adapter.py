@@ -41,6 +41,17 @@ class GoogleDriveAdapter:
             status, done = downloader.next_chunk()
         return fh.getvalue()
         
+
+    def delete_files_matching_regex(self, folder_id: str, pattern: re.Pattern) -> None:
+        """Delete all non-trashed files in folder that match a regex pattern."""
+        query = f"'{folder_id}' in parents and trashed = false"
+        results = self.service.files().list(q=query, fields="files(id, name)").execute()
+        files = results.get('files', [])
+
+        for file_data in files:
+            if pattern.match(file_data['name']):
+                self.service.files().delete(fileId=file_data['id']).execute()
+
     def get_subfolder_id(self, parent_id: str, folder_name: str) -> Optional[str]:
         """Find subfolder by name."""
         query = f"'{parent_id}' in parents and name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"

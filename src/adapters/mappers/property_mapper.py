@@ -12,13 +12,17 @@ def map_properties(raw_biens) -> Dict[str, Property]:
 
         builder = Property.Builder()\
             .with_id(p_id)\
-            .with_address(extract_property_value(props, "{ADRESSE_BIEN}"))\
-            .with_owner_name(extract_property_value(props, "{NOM_BAILLEUR}"))\
-            .with_owner_address(extract_property_value(props, "{ADRESSE_BAILLEUR}"))\
-            .with_construction_year(extract_property_value(props, "{ANNEE_CONSTRUCTION}"))\
-            .with_total_surface(extract_property_value(props, "{SURFACE_TOTALE}")) # This maps to helper extract -> returns str usually
-
-        # Removed .with_city, .with_postal_code calls
-        
+            .with_address(extract_property_value(props, "{ADRESSE_LOGEMENT}"))\
+            .with_designation(extract_property_value(props, "{DESIGNATION_BIEN}"))\
+            .with_type_habitat(extract_property_value(props, "{TYPE_BIEN}"))\
+            .with_regime_juridique(extract_property_value(props, "{REGIME_JURIDIQUE}"))\
+            .with_surface_habitable(extract_property_value(props, "{SURFACE_HABITABLE}"))\
+            .with_date_construction(extract_property_value(props, "{DATE_CONSTRUCTION}"))\
+            .with_nombre_pieces(extract_property_value(props, "{NOMBRE_PIECES}"))\
+            .with_enumeration_communs(extract_property_value(props, "{ENUMERATION_COMMUNS}"))\
+            .with_autres_parties(extract_property_value(props, "{AUTRES_PARTIES_LOGEMENT}"))\
+            .with_dpe(extract_property_value(props, "{DPE}"))\
+            .with_elements_equipement_logement(extract_property_value(props, "{ELEMENTS_EQUIPEMENT_LOGEMENT}"))\
+            .with_modalites(extract_property_value(props, "{MODALITE_CHAUFFAGE}"), extract_property_value(props, "{MODALITE_EAU}"))
         mapping[p_id] = builder.build()
     return mapping

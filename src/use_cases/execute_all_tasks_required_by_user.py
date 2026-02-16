@@ -1,7 +1,7 @@
 from src.adapters.notion_adapter import NotionAdapter
 from src.adapters.google_auth_provider import GoogleAuthProvider
 from src.adapters.google_docs_renderer import GoogleDocsRenderer
-from src.adapters.gmail_adapter import GmailAdapter
+#from src.adapters.gmail_adapter import GmailAdapter
 from src.adapters.google_drive_adapter import GoogleDriveAdapter
 from src.domain.services.placeholder_service import PlaceholderService
 from src.use_cases.generate_lease_use_case import GenerateLeaseUseCase
@@ -13,7 +13,7 @@ def do_tasks_required_from_user():
     
     notion_repo: LeaseRepository = NotionAdapter()  # <-- port
     template_renderer = GoogleDocsRenderer(auth_provider)
-    gmail_adapter = GmailAdapter(auth_provider)
+   # gmail_adapter = GmailAdapter(auth_provider)
     drive_adapter = GoogleDriveAdapter(auth_provider)
     placeholder_service = PlaceholderService()
     
@@ -40,7 +40,8 @@ def do_tasks_required_from_user():
             generate_receipt_use_case.execute(lease)
             
         # C. Receipt Sending
-        if tenant.envoyer_quittance:
-            send_receipt_use_case = SendReceiptUseCase(gmail_adapter, drive_adapter, notion_repo)
-            send_receipt_use_case.execute(lease)
+        # if tenant.envoyer_quittance:
+    
+        #     send_receipt_use_case = SendReceiptUseCase(gmail_adapter, drive_adapter, notion_repo)
+        #     send_receipt_use_case.execute(lease)
 
