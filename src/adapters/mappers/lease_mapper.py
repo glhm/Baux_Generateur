@@ -7,8 +7,8 @@ from src.domain.entities.room import Room
 from src.domain.entities.financials import Financials
 from src.domain.entities.guarantor import Guarantor
 from src.domain.entities.value_objects import Period
-#from src.domain.enums import GuarantorType, LeaseType
 from src.adapters.mappers.tenant_mapper import map_tenant
+from src.adapters.mappers.guarantor_mapper import map_guarantor_for_lease
 from src.adapters.notion_helper import extract_property_value
 
 def build_lease(
@@ -38,7 +38,7 @@ def build_lease(
     lease_property = properties_map.get(bien_ids[0]) if bien_ids else None
     lease_room = rooms_map.get(chambre_ids[0]) if chambre_ids else None
     
-    # Extract Arrival/Departure Info directly from Notion properties (moved from Tenant)
+    # Extract Arrival/Departure Info directly from Notion properties
     jour_arrivee = extract_property_value(props, "JourArrivee")
     mois_arrivee = extract_property_value(props, "MoisArrivee")
     annee_arrivee = extract_property_value(props, "AnneeArrivee")
@@ -51,63 +51,28 @@ def build_lease(
         except ValueError:
             pass
 
-    # Type Garantie (moved from Tenant)
+    # Type Garantie — raw string, used to dispatch guarantor subtype
     type_gar_str = extract_property_value(props, "Garantie")
 
+    # Type Bail
+    type_bail_str = extract_property_value(props, "TypeDeBail") or ""
 
-    # Type Bail (moved from Tenant)
-    type_bail_str = extract_property_value(props, "TypeDeBail")
-    type_bail_enum = None
-    if type_bail_str:
-        try:
-           type_bail_enum = LeaseType(type_bail_str)
-        except ValueError:
-             # Fallback
-             from src.domain.enums import LeaseType
-             for t in LeaseType:
-                 if t.value.lower() == type_bail_str.lower():
-                     type_bail_enum = t
-                     break
+    date_fin_theorique = extract_property_value(props, "DateFinTheorique") or ""
+    mention_speciale = extract_property_value(props, "MentionSpeciale") or ""
 
-    date_fin_theorique = extract_property_value(props, "DateFinTheorique") or "" # New field, non-optional str
-    mention_speciale = extract_property_value(props, "MentionSpeciale") or "" # New field, non-optional str
+    if not annee_arrivee: annee_arrivee = 2026  # Default fallback
 
-    if not annee_arrivee: annee_arrivee = 2026 # Default fallback
-
-    # Financials: We need to recalculate correctly using extracted arrival info
-    lease_financials = None
+    # 4. Base Financials (raw loyer/charges from Notion — prorata is computed later in the use case)
+    base_financials = None
     if loyer_ids and loyer_ids[0] in rents_map:
-        base_fin = rents_map[loyer_ids[0]]
-        j = jour_arrivee or 1
-        m = mois_arrivee or "Janvier"
-        
-        lease_financials = Financials.calculate(
-            loyer_amount=base_fin.loyer,
-            charges_amount=base_fin.charges,
-            jour_arrivee=j,
-            mois_arrivee_str=m,
-            year=annee_arrivee if isinstance(annee_arrivee, int) else 2024
-        )
+        base_financials = rents_map[loyer_ids[0]]
 
-    # 4. Handle Guarantor (Single)
-    lease_guarantor: Optional[Guarantor] = None
+    # 5. Handle Guarantor — delegate to guarantor_mapper
+    lease_guarantor = map_guarantor_for_lease(
+        props, type_gar_str, garant_ids, guarantors_map
+    )
     
-    # Use local type_gar_enum instead of tenant.type_garantie
-    if type_gar_enum and type_gar_enum.value == "Visale":
-        # Create VisaleGuarantor from Tenant properties (or Lease properties effectively)
-        lease_guarantor = VisaleGuarantor(
-             numero_visale=extract_property_value(props, "NumeroVisale"),
-             numero_contrat_visale=extract_property_value(props, "NumeroContratVisale"),
-             date_emission_visale=extract_property_value(props, "DateEmissionVisale")
-        )
-    else:
-        # Physical Guarantors - take the first one if available
-        if garant_ids and len(garant_ids) > 0:
-            gid = garant_ids[0]
-            if gid in guarantors_map:
-                lease_guarantor = guarantors_map[gid]
-    
-    # 5. Construct Period
+    # 6. Construct Period
     start_date = None
     end_date = None
     MONTHS = {"Janvier":1, "Février":2, "Mars":3, "Avril":4, "Mai":5, "Juin":6, 
@@ -132,21 +97,19 @@ def build_lease(
 
     period = Period(start_date=start_date, end_date=end_date)
 
-    # 6. Build Lease
+    # 7. Build Lease
     builder = Lease.Builder()\
         .with_id(loc_data['id'])\
         .with_tenant(tenant)\
         .with_period(period)\
-        .with_type_garantie(type_gar_enum)\
-        .with_type_bail(type_bail_enum)\
+        .with_type_bail(type_bail_str)\
         .with_date_fin_theorique(date_fin_theorique)\
         .with_mention_speciale(mention_speciale)
         
     if lease_guarantor: builder.with_guarantor(lease_guarantor)
-        
     if lease_property: builder.with_property(lease_property)
     if lease_room: builder.with_room(lease_room)
-    if lease_financials: builder.with_financials(lease_financials)
+    if base_financials: builder.with_financials(base_financials)
 
     try:
         return builder.build()

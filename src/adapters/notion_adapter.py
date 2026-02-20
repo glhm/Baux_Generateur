@@ -74,7 +74,7 @@ class NotionAdapter(LeaseRepository):
         raw_data = self._fetch_related_databases()
 
 
-        #guarantors_map = map_guarantors(raw_data.get('garants', {}))
+        guarantors_map = map_guarantors(raw_data.get('garants', {}))
 
         properties_map = map_properties(raw_data.get('bien', {}))
 

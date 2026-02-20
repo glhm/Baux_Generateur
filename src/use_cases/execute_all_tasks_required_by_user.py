@@ -4,6 +4,8 @@ from src.adapters.google_docs_renderer import GoogleDocsRenderer
 #from src.adapters.gmail_adapter import GmailAdapter
 from src.adapters.google_drive_adapter import GoogleDriveAdapter
 from src.domain.services.placeholder_service import PlaceholderService
+from src.domain.template_config import LeaseTemplateConfig
+from src.conf.info_apis import ID_TEMPLATE_BAIL_MEUBLE, CAUTION_ID
 from src.use_cases.generate_lease_use_case import GenerateLeaseUseCase
 from src.use_cases.generate_receipt_use_case import GenerateReceiptUseCase
 
@@ -11,11 +13,15 @@ def do_tasks_required_from_user():
     # 1. Initialize Adapters & Services
     auth_provider = GoogleAuthProvider()
     
-    notion_repo: LeaseRepository = NotionAdapter()  # <-- port
+    notion_repo: LeaseRepository = NotionAdapter()  
     template_renderer = GoogleDocsRenderer(auth_provider)
    # gmail_adapter = GmailAdapter(auth_provider)
     drive_adapter = GoogleDriveAdapter(auth_provider)
     placeholder_service = PlaceholderService()
+    lease_template_config = LeaseTemplateConfig(
+        bail_template_id=ID_TEMPLATE_BAIL_MEUBLE,
+        caution_template_id=CAUTION_ID,
+    )
     
     # 2. Retrieve Leases via Repository (port)
     print("[INFO] Fetching leases from Notion repository...")
@@ -30,7 +36,7 @@ def do_tasks_required_from_user():
         # A. Lease Generation
         if tenant.activer_generation: 
             print(f"[INFO] Processing lease for {tenant.full_name}")
-            generate_lease_use_case = GenerateLeaseUseCase(template_renderer, placeholder_service)
+            generate_lease_use_case = GenerateLeaseUseCase(template_renderer, placeholder_service, lease_template_config)
             generate_lease_use_case.execute(lease)
 
         # B. Receipt Generation
