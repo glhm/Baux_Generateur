@@ -1,46 +1,10 @@
 import os
-
 import requests
-
-from typing import List, Dict, Any
-
-
+from typing import List, Dict, Any, Set
 from src.ports.lease_repository import LeaseRepository
-
 from src.domain.entities.lease import Lease
-
 from src.conf.info_apis import DATABASE_IDS
-
-
-from src.adapters.mappers.guarantor_mapper import map_guarantors
-
-from src.adapters.mappers.property_mapper import map_properties
-from src.adapters.mappers.room_mapper import map_rooms
-from src.adapters.mappers.rent_mapper import map_rents
-
 from src.adapters.mappers.lease_mapper import build_lease
-
-
-# Need to check if I need to update this file to fix usage of map_rents
-
-# map_rents returns Dict[str, Financials] now (was Numbers)
-
-# NotionAdapter just passes rents_map to build_lease.
-
-# build_lease expects Dict[str, Financials].
-
-# So direct pass-through is fine, but I should ensure type hinting import is updated if I used it.
-
-# NotionAdapter step 277 didn't import Numbers/Financials explicitly for type hint of map variable, 
-
-# it just assigned `rents_map = map_rents(...)`.
-
-# But `build_lease` signature in `lease_mapper.py` mentions `Financials`.
-
-
-# Re-writing NotionAdapter to just ensure imports are clean and correct context.
-
-# No logic change needed except maybe imports.
 
 
 class NotionAdapter(LeaseRepository):
@@ -71,23 +35,16 @@ class NotionAdapter(LeaseRepository):
 
         locataires_raw = self._fetch_concerned_locataires()
 
-        raw_data = self._fetch_related_databases()
-
-
-        guarantors_map = map_guarantors(raw_data.get('garants', {}))
-
-        properties_map = map_properties(raw_data.get('bien', {}))
-
-        rooms_map = map_rooms(raw_data.get('chambres', {}))
-
-        rents_map = map_rents(raw_data.get('loyer', {}))
-
+        raw_data = self._fetch_related_databases(locataires_raw)
 
         leases: List[Lease] = []
 
         for loc_data in locataires_raw:
 
-            lease = build_lease(loc_data, guarantors_map, properties_map, rooms_map, rents_map)
+            lease = build_lease(
+                loc_data,
+                raw_data,
+            )
 
             if lease:
 
@@ -180,18 +137,54 @@ class NotionAdapter(LeaseRepository):
         return response.json().get('results', [])
 
 
-    def _fetch_related_databases(self) -> Dict[str, Any]:
+    def _fetch_related_databases(self, locataires_raw: List[Dict[str, Any]]) -> Dict[str, Any]:
 
-        all_data = {}
+        related_ids = self._extract_related_ids(locataires_raw)
 
-        related_dbs = {k: v for k, v in DATABASE_IDS.items() if k != 'locataire'}
+        return {
+            'garants': {'results': self._fetch_pages_by_ids(related_ids['garants'])},
+            'bien': {'results': self._fetch_pages_by_ids(related_ids['bien'])},
+            'chambres': {'results': self._fetch_pages_by_ids(related_ids['chambres'])},
+            'loyer': {'results': self._fetch_pages_by_ids(related_ids['loyer'])},
+        }
 
-        for name, db_id in related_dbs.items():
+    def _extract_related_ids(self, locataires_raw: List[Dict[str, Any]]) -> Dict[str, Set[str]]:
+        related_ids: Dict[str, Set[str]] = {
+            'garants': set(),
+            'bien': set(),
+            'chambres': set(),
+            'loyer': set(),
+        }
 
-            response = requests.post(f"https://api.notion.com/v1/databases/{db_id}/query", headers=self.headers)
+        for locataire in locataires_raw:
+            props = locataire.get('properties', {})
 
+            if props.get('Garantie', {}).get('select', {}).get('name') != 'Visale':
+                related_ids['garants'].update(
+                    rel['id'] for rel in props.get('🪙 Garants', {}).get('relation', [])
+                )
+
+            related_ids['bien'].update(
+                rel['id'] for rel in props.get('🏠 Biens', {}).get('relation', [])
+            )
+            related_ids['chambres'].update(
+                rel['id'] for rel in props.get('🛏️ Chambres', {}).get('relation', [])
+            )
+            related_ids['loyer'].update(
+                rel['id'] for rel in props.get('💲 Loyers', {}).get('relation', [])
+            )
+
+        return related_ids
+
+    def _fetch_pages_by_ids(self, page_ids: Set[str]) -> List[Dict[str, Any]]:
+        pages: List[Dict[str, Any]] = []
+
+        for page_id in page_ids:
+            response = requests.get(
+                f"https://api.notion.com/v1/pages/{page_id}",
+                headers=self.headers,
+            )
             response.raise_for_status()
+            pages.append(response.json())
 
-            all_data[name] = response.json()
-        return all_data
-
+        return pages

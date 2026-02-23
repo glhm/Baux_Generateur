@@ -32,6 +32,26 @@ class Financials:
     charges: float
 
     @staticmethod
+    def from_base_amounts(loyer_amount: float, charges_amount: float) -> 'Financials':
+        """
+        Build a Financials object from raw rent/charges only.
+        Prorata-related fields are intentionally left to 0 and computed later
+        by the dedicated domain service.
+        """
+        loyer_CC = loyer_amount + charges_amount
+        return Financials(
+            prorata_total_CC=0.0,
+            prorata_loyer=0.0,
+            prorata_charges=0.0,
+            nombre_de_jours_premier_mois=0,
+            total_premier_mois=0.0,
+            montant_garanties=round(2 * loyer_amount, 2),
+            loyer_CC=loyer_CC,
+            loyer=loyer_amount,
+            charges=charges_amount,
+        )
+
+    @staticmethod
     def calculate(loyer_amount: float, charges_amount: float, jour_arrivee: int, mois_arrivee_str: str, year: int = 2024) -> 'Financials':
         loyer_CC = loyer_amount + charges_amount
         
