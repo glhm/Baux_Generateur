@@ -16,7 +16,7 @@ class GmailAdapter(MailPort):
         creds = auth_provider.get_credentials()
         self.service = build('gmail', 'v1', credentials=creds)
         
--    def send_email_with_attachment(self, to_address: str, subject: str, body: str, attachment_name: str, attachment_data: bytes) -> dict:        """
+    def send_email_with_attachment(self, to_address: str, subject: str, body: str, attachment_name: str, attachment_data: bytes) -> dict:        """
         Send an email with a PDF attachment.
         Returns the sent message object or None on failure.
         """
