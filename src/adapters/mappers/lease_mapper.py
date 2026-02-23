@@ -1,23 +1,19 @@
-from typing import Dict, Optional, List
+from typing import Dict
 from datetime import date
+
 from src.domain.entities.lease import Lease
-from src.domain.entities.tenant import Tenant
-from src.domain.entities.property import Property
-from src.domain.entities.room import Room
-from src.domain.entities.financials import Financials
-from src.domain.entities.guarantor import Guarantor
 from src.domain.entities.value_objects import Period
 from src.adapters.mappers.tenant_mapper import map_tenant
-from src.adapters.mappers.guarantor_mapper import map_guarantor_for_lease
+from src.adapters.mappers.guarantor_mapper import map_guarantor
+from src.adapters.mappers.property_mapper import map_properties
+from src.adapters.mappers.room_mapper import map_rooms
+from src.adapters.mappers.rent_mapper import map_rents
 from src.adapters.notion_helper import extract_property_value
 
 def build_lease(
     loc_data,
-    guarantors_map: Dict[str, Guarantor],
-    properties_map: Dict[str, Property],
-    rooms_map: Dict[str, Room],
-    rents_map: Dict[str, Financials]
-) -> Optional[Lease]:
+    raw_data: Dict[str, Dict],
+) -> Lease:
     """
     Build a Lease aggregate from Notion data and pre-fetched related entity maps.
     """
@@ -26,7 +22,7 @@ def build_lease(
     # 1. Build Tenant
     tenant = map_tenant(loc_data)
     if not tenant:
-        return None
+        raise ValueError(f"Tenant mapping failed for locataire {loc_data.get('id', 'unknown')}")
 
     # 2. Identify Relations
     garant_ids = extract_property_value(props, "🪙 Garants") or []
@@ -34,23 +30,27 @@ def build_lease(
     chambre_ids = extract_property_value(props, "🛏️ Chambres") or []
     loyer_ids = extract_property_value(props, "💲 Loyers") or []
 
-    # 3. Retrieve Related Entities
+    # 3. Build per-lease scoped maps from raw related data
+    per_lease_raw = _build_per_lease_raw_data(raw_data, garant_ids, bien_ids, chambre_ids, loyer_ids)
+    guarantors_raw = per_lease_raw['garants']
+    properties_map = map_properties(per_lease_raw['bien'])
+    rooms_map = map_rooms(per_lease_raw['chambres'])
+    rents_map = map_rents(per_lease_raw['loyer'])
+
+    # 4. Retrieve Related Entities
     lease_property = properties_map.get(bien_ids[0]) if bien_ids else None
     lease_room = rooms_map.get(chambre_ids[0]) if chambre_ids else None
     
+    if not bien_ids or lease_property is None:
+        raise ValueError(f"Missing or unresolved property for locataire {loc_data.get('id', 'unknown')}")
+    if not chambre_ids or lease_room is None:
+        raise ValueError(f"Missing or unresolved room for locataire {loc_data.get('id', 'unknown')}")
+
     # Extract Arrival/Departure Info directly from Notion properties
     jour_arrivee = extract_property_value(props, "JourArrivee")
     mois_arrivee = extract_property_value(props, "MoisArrivee")
     annee_arrivee = extract_property_value(props, "AnneeArrivee")
     
-    # Handle ANNEES override for AnneeArrivee (legacy logic)
-    annees = extract_property_value(props, "ANNEES")
-    if annees and isinstance(annees, list) and len(annees) > 0:
-        try:
-            annee_arrivee = int(annees[0])
-        except ValueError:
-            pass
-
     # Type Garantie — raw string, used to dispatch guarantor subtype
     type_gar_str = extract_property_value(props, "Garantie")
 
@@ -60,19 +60,29 @@ def build_lease(
     date_fin_theorique = extract_property_value(props, "DateFinTheorique") or ""
     mention_speciale = extract_property_value(props, "MentionSpeciale") or ""
 
+    if not type_bail_str:
+        raise ValueError(f"Missing TypeDeBail for locataire {loc_data.get('id', 'unknown')}")
+
+    if not date_fin_theorique:
+        raise ValueError(f"Missing DateFinTheorique for locataire {loc_data.get('id', 'unknown')}")
+
     if not annee_arrivee: annee_arrivee = 2026  # Default fallback
 
-    # 4. Base Financials (raw loyer/charges from Notion — prorata is computed later in the use case)
+    # 5. Base Financials (raw loyer/charges from Notion — prorata is computed later in the use case)
     base_financials = None
     if loyer_ids and loyer_ids[0] in rents_map:
         base_financials = rents_map[loyer_ids[0]]
 
-    # 5. Handle Guarantor — delegate to guarantor_mapper
-    lease_guarantor = map_guarantor_for_lease(
-        props, type_gar_str, garant_ids, guarantors_map
-    )
+    # 6. Handle Guarantor — delegate to guarantor_mapper
+    lease_guarantor = map_guarantor(props, type_gar_str, garant_ids, guarantors_raw)
     
-    # 6. Construct Period
+    if base_financials is None:
+        raise ValueError(f"Missing or unresolved loyer for locataire {loc_data.get('id', 'unknown')}")
+
+    if lease_guarantor is None:
+        raise ValueError(f"Missing or unresolved guarantor for locataire {loc_data.get('id', 'unknown')}")
+
+    # 7. Construct Period
     start_date = None
     end_date = None
     MONTHS = {"Janvier":1, "Février":2, "Mars":3, "Avril":4, "Mai":5, "Juin":6, 
@@ -97,7 +107,7 @@ def build_lease(
 
     period = Period(start_date=start_date, end_date=end_date)
 
-    # 7. Build Lease
+    # 8. Build Lease
     builder = Lease.Builder()\
         .with_id(loc_data['id'])\
         .with_tenant(tenant)\
@@ -111,7 +121,31 @@ def build_lease(
     if lease_room: builder.with_room(lease_room)
     if base_financials: builder.with_financials(base_financials)
 
-    try:
-        return builder.build()
-    except ValueError:
-        return None
+    return builder.build()
+
+
+def _build_per_lease_raw_data(
+    raw_data: Dict[str, Dict],
+    garant_ids,
+    bien_ids,
+    chambre_ids,
+    loyer_ids,
+) -> Dict[str, Dict]:
+    """Return tenant-scoped raw Notion payloads so each lease builds its own maps."""
+
+    def _filter_results(raw_db: Dict, accepted_ids) -> Dict:
+        accepted = set(accepted_ids)
+        return {
+            'results': [
+                item
+                for item in raw_db.get('results', [])
+                if item.get('id') in accepted
+            ]
+        }
+
+    return {
+        'garants': _filter_results(raw_data.get('garants', {}), garant_ids),
+        'bien': _filter_results(raw_data.get('bien', {}), bien_ids),
+        'chambres': _filter_results(raw_data.get('chambres', {}), chambre_ids),
+        'loyer': _filter_results(raw_data.get('loyer', {}), loyer_ids),
+    }
