@@ -1,6 +1,8 @@
 import os
 import requests
+
 from typing import List, Dict, Any, Set
+
 from src.ports.lease_repository import LeaseRepository
 from src.domain.entities.lease import Lease
 from src.conf.info_apis import DATABASE_IDS
