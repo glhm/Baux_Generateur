@@ -11,8 +11,9 @@ def map_rents(raw_loyers) -> Dict[str, Financials]:
         props = item['properties']
         l_id = item['id']
 
-        rent = extract_property_value(props, "{MONTANT_LOYER}") or extract_property_value(props, "{LOYER_HC}")
-        charges = extract_property_value(props, "{MONTANT_CHARGES}") or extract_property_value(props, "{CHARGES}")
+        rent = extract_property_value(props, "{MONTANT_LOYER}") 
+        charges = extract_property_value(props, "{MONTANT_CHARGES}") 
+#loyer les données a recuperer c'est {MONTANT_LOYER} {MONTANT_CHARGES} {MONTANT_TOTAL_LETTRES} {ASSAINISSEMENT} {EAU} {CHAUFFAGE} {ELECTRICITE} {WIFI} {MENAGE}
 
         mapping[l_id] = Financials.from_base_amounts(
             loyer_amount=float(rent) if rent else 0.0,
